@@ -12,6 +12,19 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
     body { background-color: #f4f6f9; color: #333; padding: 12px; overflow-x: hidden; }
     
+    /* Fallback de Tela Cheia caso o navegador/iframe bloqueie a API nativa */
+    .pseudo-fullscreen {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 999999 !important;
+      background: #f4f6f9 !important;
+      overflow-y: auto !important;
+      padding: 12px !important;
+    }
+
     header {
       background-color: #212529; color: #fff; padding: 10px 16px;
       display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
@@ -128,14 +141,14 @@
     </table>
 
     <div class="paginacao" id="paginacaoContainer" style="display:none;">
-      <button class="btn btn-blue" onclick="mudarPagina(-1)">◀ Anterior</button>
+      <button type="button" class="btn btn-blue" onclick="mudarPagina(-1)">◀ Anterior</button>
       <span id="infoPagina">Página 1</span>
-      <button class="btn btn-blue" onclick="mudarPagina(1)">Próxima ▶</button>
+      <button type="button" class="btn btn-blue" onclick="mudarPagina(1)">Próxima ▶</button>
     </div>
   </div>
 
-  <!-- Modal Unificado de Login e Cadastro (Obrigatório) -->
-  <div id="modalAuth" class="modal-overlay" style="display: flex;">
+  <!-- Modal Unificado de Login e Cadastro (Oculto por padrão) -->
+  <div id="modalAuth" class="modal-overlay" style="display: none;">
     <div class="modal-content">
       <div class="auth-tabs">
         <div id="tabLogin" class="auth-tab active" onclick="alternarAbaAuth('login')">Login</div>
@@ -147,7 +160,7 @@
         <input type="email" id="loginEmailInput" placeholder="Seu E-mail...">
         <input type="password" id="loginSenhaInput" placeholder="Sua Senha..." onkeyup="if(event.key==='Enter') executarLogin()">
         <div class="modal-buttons">
-          <button class="btn btn-green" style="width: 100%;" onclick="executarLogin()">Entrar</button>
+          <button type="button" class="btn btn-green" style="width: 100%;" onclick="executarLogin()">Entrar</button>
         </div>
       </div>
 
@@ -157,7 +170,7 @@
         <input type="email" id="cadEmailInput" placeholder="Seu E-mail...">
         <input type="password" id="cadSenhaInput" placeholder="Crie uma Senha...">
         <div class="modal-buttons">
-          <button class="btn btn-purple" style="width: 100%;" onclick="executarCadastro()">Cadastrar e Entrar</button>
+          <button type="button" class="btn btn-purple" style="width: 100%;" onclick="executarCadastro()">Cadastrar e Entrar</button>
         </div>
       </div>
     </div>
@@ -170,7 +183,7 @@
       <p style="margin-bottom:12px; font-size:13px; color:#555;">Escolha para qual evento você deseja indicar músicas:</p>
       <div id="listaEventosBotoes" style="display:flex; flex-direction:column; gap:8px;"></div>
       <div class="modal-buttons">
-        <button class="btn btn-red" onclick="fecharModal('modalEscolherEvento')">Ignorar</button>
+        <button type="button" class="btn btn-red" onclick="fecharModal('modalEscolherEvento')">Ignorar</button>
       </div>
     </div>
   </div>
@@ -182,14 +195,14 @@
       <p style="font-size:13px; margin-bottom:8px; font-weight:bold;">Novo Evento:</p>
       <div style="display:flex; gap:6px; margin-bottom:15px;">
         <input type="text" id="novoEventoInput" placeholder="Nome do evento..." style="margin-bottom:0;">
-        <button class="btn btn-green" onclick="salvarNovoEvento()">Cadastrar</button>
+        <button type="button" class="btn btn-green" onclick="salvarNovoEvento()">Cadastrar</button>
       </div>
 
       <p style="font-size:13px; margin-bottom:8px; font-weight:bold;">Eventos Cadastrados:</p>
       <ul id="listaEventosAdmin" class="lista-eventos-modal"></ul>
 
       <div class="modal-buttons">
-        <button class="btn btn-red" onclick="fecharModal('modalGerenciarEvento')">Fechar</button>
+        <button type="button" class="btn btn-red" onclick="fecharModal('modalGerenciarEvento')">Fechar</button>
       </div>
     </div>
   </div>
@@ -200,18 +213,62 @@
     const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
     const EMAIL_ADMINISTRADOR = 'marcos.angelo@ifal.edu.br';
 
+    // --- GERENCIAMENTO DE PERSISTÊNCIA MULTI-ABAS (LocalStorage + SessionStorage + Cookies) ---
+    function salvarDados(chave, valor) {
+      const str = JSON.stringify(valor);
+      try { localStorage.setItem(chave, str); } catch(e) {}
+      try { sessionStorage.setItem(chave, str); } catch(e) {}
+      try { document.cookie = chave + "=" + encodeURIComponent(str) + ";path=/;max-age=31536000;SameSite=Lax"; } catch(e) {}
+    }
+
+    function obterDados(chave, valorPadrao) {
+      try {
+        const item = localStorage.getItem(chave);
+        if (item !== null) return JSON.parse(item);
+      } catch(e) {}
+      try {
+        const itemSess = sessionStorage.getItem(chave);
+        if (itemSess !== null) return JSON.parse(itemSess);
+      } catch(e) {}
+      try {
+        const nameEQ = chave + "=";
+        const ca = document.cookie.split(';');
+        for(let i=0; i < ca.length; i++) {
+          let c = ca[i].trim();
+          if (c.indexOf(nameEQ) === 0) return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
+        }
+      } catch(e) {}
+      return valorPadrao;
+    }
+
+    function removerDados(chave) {
+      try { localStorage.removeItem(chave); } catch(e) {}
+      try { sessionStorage.removeItem(chave); } catch(e) {}
+      try { document.cookie = chave + "=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT"; } catch(e) {}
+    }
+
+    // Sincronizar Sessão Automaticamente entre Múltiplas Abas
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'rock_logged_user') {
+        usuarioLogado = e.newValue ? JSON.parse(e.newValue) : null;
+        atualizarInterfaceUsuario();
+        if (usuarioLogado && repertorioOriginal.length === 0) {
+          carregarPlanilha();
+        }
+      }
+    });
+
     let repertorioOriginal = [];
     let dadosFiltrados = [];
-    let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
-    let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
+    let favoritos = obterDados('rock_favs', []);
+    let likesLocais = obterDados('rock_likes', {});
     
-    let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
-    let indicacoesPorEvento = JSON.parse(localStorage.getItem('rock_indicacoes') || '{}');
-    let eventoAtualSessao = localStorage.getItem('rock_evento_atual') || '';
+    let eventosCadastrados = obterDados('rock_eventos', []);
+    let indicacoesPorEvento = obterDados('rock_indicacoes', {});
+    let eventoAtualSessao = obterDados('rock_evento_atual', '');
 
-    // Usuários e Autenticação (localStorage mantêm a sessão ao abrir em novas abas)
-    let usuariosCadastrados = JSON.parse(localStorage.getItem('rock_users') || '[]');
-    let usuarioLogado = JSON.parse(localStorage.getItem('rock_logged_user') || 'null');
+    let usuariosCadastrados = obterDados('rock_users', []);
+    let usuarioLogado = obterDados('rock_logged_user', null);
 
     let paginaAtual = 1;
     const itensPorPagina = 30;
@@ -226,20 +283,43 @@
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    function alternarTelaCheia() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {
-          mostrarToast('Navegador bloqueou a tela cheia.');
-        });
+    // --- FUNÇÃO DE TELA CHEIA ROBUTA COM FALLBACK CSS ---
+    function alternarTelaCheia(e) {
+      if (e) e.preventDefault();
+      const doc = document;
+      const docEl = document.documentElement;
+
+      const isFullscreen = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+
+      if (!isFullscreen && !docEl.classList.contains('pseudo-fullscreen')) {
+        let req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+        
+        if (req) {
+          try {
+            let promise = req.call(docEl);
+            if (promise && promise.catch) {
+              promise.catch(() => {
+                // Se a permissão for negada pelo navegador ou iframe, ativa Fallback CSS
+                docEl.classList.add('pseudo-fullscreen');
+                mostrarToast('Tela Cheia (Modo Expandido)');
+              });
+            }
+          } catch(err) {
+            docEl.classList.add('pseudo-fullscreen');
+          }
+        } else {
+          docEl.classList.add('pseudo-fullscreen');
+        }
       } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
+        if (docEl.classList.contains('pseudo-fullscreen')) {
+          docEl.classList.remove('pseudo-fullscreen');
+        } else {
+          let exit = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+          if (exit) {
+            try { exit.call(doc); } catch(err) {}
+          }
         }
       }
-    }
-
-    function abrirEmNovaAba() {
-      window.open(window.location.href, '_blank');
     }
 
     // --- GERENCIAMENTO DE CADASTRO / LOGIN ---
@@ -275,7 +355,7 @@
 
       const novoUsuario = { nome, email, senha };
       usuariosCadastrados.push(novoUsuario);
-      localStorage.setItem('rock_users', JSON.stringify(usuariosCadastrados));
+      salvarDados('rock_users', usuariosCadastrados);
 
       efetuarLoginSessao(novoUsuario);
       fecharModal('modalAuth');
@@ -304,7 +384,7 @@
     function efetuarLoginSessao(user) {
       const isAdmin = user.email === EMAIL_ADMINISTRADOR;
       usuarioLogado = { ...user, isAdmin };
-      localStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
+      salvarDados('rock_logged_user', usuarioLogado);
       atualizarInterfaceUsuario();
       
       if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
@@ -321,8 +401,8 @@
 
     function efetuarLogout() {
       usuarioLogado = null;
-      localStorage.removeItem('rock_logged_user');
-      localStorage.removeItem('rock_evento_atual');
+      removerDados('rock_logged_user');
+      removerDados('rock_evento_atual');
       eventoAtualSessao = '';
       atualizarInterfaceUsuario();
       mostrarToast('Você saiu da sua conta.');
@@ -351,16 +431,15 @@
       `;
 
       let botoesAdmin = usuarioLogado.isAdmin 
-        ? `<button class="btn btn-purple" onclick="abrirModalEventos()">📅 Eventos (Admin)</button>` 
+        ? `<button type="button" class="btn btn-purple" onclick="abrirModalEventos()">📅 Eventos (Admin)</button>` 
         : '';
 
       actionsContainer.innerHTML = `
         ${botoesAdmin}
-        <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
-        <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
-        <button class="btn btn-green" onclick="alternarTelaCheia()">⛶ Tela Cheia</button>
-        <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Nova Aba</button>
-        <button class="btn btn-red" onclick="efetuarLogout()">🚪 Sair</button>
+        <button type="button" class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
+        <button type="button" class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
+        <button type="button" class="btn btn-green" onclick="alternarTelaCheia(event)">⛶ Tela Cheia</button>
+        <button type="button" class="btn btn-red" onclick="efetuarLogout()">🚪 Sair</button>
       `;
       
       atualizarBadgeEvento();
@@ -385,6 +464,7 @@
       }
       eventosCadastrados.forEach(ev => {
         const btn = document.createElement('button');
+        btn.type = 'button';
         btn.className = 'btn btn-purple';
         btn.textContent = ev;
         btn.onclick = () => selecionarEventoAtivo(ev);
@@ -394,7 +474,7 @@
 
     function selecionarEventoAtivo(ev) {
       eventoAtualSessao = ev;
-      localStorage.setItem('rock_evento_atual', ev);
+      salvarDados('rock_evento_atual', ev);
       atualizarBadgeEvento();
       fecharModal('modalEscolherEvento');
       filtrarData();
@@ -431,9 +511,9 @@
           li.innerHTML = `
             <span><b>${ev}</b> ${isAtivo ? '⭐ (Ativo)' : ''}</span>
             <div>
-              <button class="btn-sm-action" onclick="selecionarEventoAtivo('${ev}')" title="Ativar este Evento">📌</button>
-              <button class="btn-sm-action" onclick="editarEvento(${idx})" title="Editar Nome">✏️</button>
-              <button class="btn-sm-action" onclick="excluirEvento(${idx})" title="Excluir Evento">🗑️</button>
+              <button type="button" class="btn-sm-action" onclick="selecionarEventoAtivo('${ev}')" title="Ativar este Evento">📌</button>
+              <button type="button" class="btn-sm-action" onclick="editarEvento(${idx})" title="Editar Nome">✏️</button>
+              <button type="button" class="btn-sm-action" onclick="excluirEvento(${idx})" title="Excluir Evento">🗑️</button>
             </div>
           `;
           ul.appendChild(li);
@@ -450,10 +530,10 @@
           return;
         }
         eventosCadastrados.push(novo);
-        localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        salvarDados('rock_eventos', eventosCadastrados);
         
         eventoAtualSessao = novo;
-        localStorage.setItem('rock_evento_atual', novo);
+        salvarDados('rock_evento_atual', novo);
         
         input.value = '';
         atualizarBadgeEvento();
@@ -475,16 +555,16 @@
         if (indicacoesPorEvento[antigoNome]) {
           indicacoesPorEvento[nomeFormatado] = indicacoesPorEvento[antigoNome];
           delete indicacoesPorEvento[antigoNome];
-          localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+          salvarDados('rock_indicacoes', indicacoesPorEvento);
         }
         
         if (eventoAtualSessao === antigoNome) {
           eventoAtualSessao = nomeFormatado;
-          localStorage.setItem('rock_evento_atual', nomeFormatado);
+          salvarDados('rock_evento_atual', nomeFormatado);
           atualizarBadgeEvento();
         }
         
-        localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        salvarDados('rock_eventos', eventosCadastrados);
         renderizarListaEventosAdmin();
         renderizarBotoesEscolhaEvento();
         filtrarData();
@@ -499,16 +579,16 @@
         
         if (indicacoesPorEvento[nomeEv]) {
           delete indicacoesPorEvento[nomeEv];
-          localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+          salvarDados('rock_indicacoes', indicacoesPorEvento);
         }
         
         if (eventoAtualSessao === nomeEv) {
           eventoAtualSessao = '';
-          localStorage.removeItem('rock_evento_atual');
+          removerDados('rock_evento_atual');
           atualizarBadgeEvento();
         }
         
-        localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        salvarDados('rock_eventos', eventosCadastrados);
         renderizarListaEventosAdmin();
         renderizarBotoesEscolhaEvento();
         filtrarData();
@@ -640,11 +720,11 @@
           <td>${item.musica}</td>
           <td>${item.tom ? `<span class="tom-badge">${item.tom}</span>` : ''}</td>
           <td>${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra" onclick="registrarAcesso('${item.id}')">📌 Cifra</a>` : '-'}</td>
-          <td><button class="btn-action" onclick="toggleFavorito('${item.id}')">${isFav ? '❤️' : '🤍'}</button></td>
-          <td><button class="btn-action pill-like ${hasLike ? 'active' : ''}" onclick="toggleLike('${item.id}')">👍 ${totalLikes}</button></td>
+          <td><button type="button" class="btn-action" onclick="toggleFavorito('${item.id}')">${isFav ? '❤️' : '🤍'}</button></td>
+          <td><button type="button" class="btn-action pill-like ${hasLike ? 'active' : ''}" onclick="toggleLike('${item.id}')">👍 ${totalLikes}</button></td>
           <td><span class="pill-acesso" id="acesso-${item.id}">${item.acessos}</span></td>
-          <td><button class="btn-action" onclick="toggleIndicacao('${item.id}')">${isIndicado ? '✅' : '➕'}</button></td>
-          <td><button class="btn-action" onclick="toggleErro('${item.id}')">${item.temErro ? '🔴' : '🟣'}</button></td>
+          <td><button type="button" class="btn-action" onclick="toggleIndicacao('${item.id}')">${isIndicado ? '✅' : '➕'}</button></td>
+          <td><button type="button" class="btn-action" onclick="toggleErro('${item.id}')">${item.temErro ? '🔴' : '🟣'}</button></td>
         `;
         corpo.appendChild(tr);
       });
@@ -666,13 +746,13 @@
     function toggleFavorito(id) {
       const idx = favoritos.indexOf(id);
       if (idx > -1) favoritos.splice(idx, 1); else favoritos.push(id);
-      localStorage.setItem('rock_favs', JSON.stringify(favoritos));
+      salvarDados('rock_favs', favoritos);
       filtrarData();
     }
 
     function toggleLike(id) {
       if (likesLocais[id]) delete likesLocais[id]; else likesLocais[id] = true;
-      localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
+      salvarDados('rock_likes', likesLocais);
       filtrarData();
     }
 
@@ -687,7 +767,7 @@
       const idx = lista.indexOf(id);
       if (idx > -1) lista.splice(idx, 1); else lista.push(id);
       
-      localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+      salvarDados('rock_indicacoes', indicacoesPorEvento);
       filtrarData();
     }
 
