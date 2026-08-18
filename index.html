@@ -31,12 +31,11 @@
       width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #ced4da; border-radius: 6px; background: white;
     }
 
-    /* BARRA HORIZONTAL E CONTAINER */
     .table-container { 
       width: 100%; max-width: 100vw; overflow-x: auto; 
       -webkit-overflow-scrolling: touch; background: white; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); 
     }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 1000px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 1100px; }
     thead { background-color: #212529; color: white; }
     thead tr.titles th { padding: 10px 8px 4px 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
     thead tr.filters th { padding: 4px 6px 10px 6px; }
@@ -55,11 +54,9 @@
     
     .loading { text-align: center; padding: 25px; font-size: 15px; font-weight: bold; color: #555; }
 
-    /* PAGINAÇÃO */
     .paginacao { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 15px; background: white; border-top: 1px solid #ddd; }
     .paginacao span { font-weight: bold; font-size: 14px; }
 
-    /* JANELAS MODAIS */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; }
     .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; color: #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     .modal-content h3 { margin-bottom: 15px; font-size: 18px; }
@@ -81,7 +78,7 @@
       <button class="btn btn-purple" onclick="abrirModalEventos()">📅 Eventos (Admin)</button>
       <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
       <button class="btn btn-blue" onclick="exportarCSV()">⬇️ Exportar CSV</button>
-      <button class="btn btn-green" id="btnTelaCheia" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
+      <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
       <button class="btn btn-red" onclick="sair()">Sair</button>
     </div>
   </header>
@@ -124,7 +121,7 @@
         <tr><td colspan="11" class="loading">Carregando repertório da Planilha Google...</td></tr>
       </tbody>
     </table>
-    <!-- PAGINAÇÃO DE 30 EM 30 -->
+
     <div class="paginacao" id="paginacaoContainer" style="display:none;">
       <button class="btn btn-blue" onclick="mudarPagina(-1)">◀ Anterior</button>
       <span id="infoPagina">Página 1</span>
@@ -132,7 +129,6 @@
     </div>
   </div>
 
-  <!-- MODAL: Escolher Evento (Usuário) -->
   <div id="modalEscolherEvento" class="modal-overlay">
     <div class="modal-content">
       <h3>Selecione um Evento para Hoje</h3>
@@ -144,7 +140,6 @@
     </div>
   </div>
 
-  <!-- MODAL: Gerenciar Eventos (Admin) -->
   <div id="modalGerenciarEvento" class="modal-overlay">
     <div class="modal-content">
       <h3>📅 Gerenciar Eventos</h3>
@@ -162,19 +157,16 @@
 
   <script>
     const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
-    const SCRIPT_API_URL = '';
 
     let repertorioOriginal = [];
     let dadosFiltrados = [];
     let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
     let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
     
-    // Variáveis Eventos
     let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
     let indicacoesPorEvento = JSON.parse(localStorage.getItem('rock_indicacoes') || '{}');
     let eventoAtualSessao = sessionStorage.getItem('rock_evento_atual') || '';
 
-    // Paginação
     let paginaAtual = 1;
     const itensPorPagina = 30;
 
@@ -188,7 +180,6 @@
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    // TELA CHEIA - ABRE EM NOVA ABA NATIVAMENTE
     function abrirEmNovaAba() {
       window.open(window.location.href, '_blank');
     }
@@ -395,7 +386,6 @@
         const elAcesso = document.getElementById(`acesso-${id}`);
         if (elAcesso) elAcesso.textContent = item.acessos;
       }
-      if (SCRIPT_API_URL) fetch(`${SCRIPT_API_URL}?id=${id}&action=acesso`, { mode: 'no-cors' });
     }
 
     function toggleFavorito(id) {
@@ -423,7 +413,6 @@
       
       localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
       filtrarData();
-      if (SCRIPT_API_URL) fetch(`${SCRIPT_API_URL}?id=${id}&action=indicacao&evento=${encodeURIComponent(eventoAtualSessao)}&estado=${idx > -1 ? 'remover' : 'adicionar'}`, { mode: 'no-cors' });
     }
 
     function toggleErro(id) {
@@ -431,7 +420,6 @@
       if (item) {
         item.temErro = !item.temErro;
         filtrarData(); 
-        if (SCRIPT_API_URL) fetch(`${SCRIPT_API_URL}?id=${id}&action=erro&estado=${item.temErro}`, { mode: 'no-cors' });
       }
     }
 
