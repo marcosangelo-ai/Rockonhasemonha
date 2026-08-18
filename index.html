@@ -3,458 +3,192 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rockonhasemonha - Organização de Repertório</title>
+  <title>Rockonhasemonha - Repertório</title>
+  <!-- PapaParse para ler a planilha em tempo real -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <style>
-    :root {
-      --bg-color: #f4f6f9;
-      --text-color: #333333;
-      --card-bg: #ffffff;
-      --header-bg: #222222;
-      --border-color: #dddddd;
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background-color: #f4f6f9; color: #333; padding: 10px; }
+    
+    header {
+      background-color: #212529; color: #fff; padding: 12px 20px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+      border-radius: 6px; margin-bottom: 15px;
+    }
+    .user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+    .badge { background: #dc3545; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+    .actions { display: flex; gap: 8px; }
+    .btn { padding: 8px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; font-size: 13px; }
+    .btn-green { background-color: #198754; }
+    .btn-blue { background-color: #0dcaf0; color: #000; }
+    .btn-dark { background-color: #ffc107; color: #000; }
+    .btn-red { background-color: #dc3545; }
+
+    .search-bar { width: 100%; margin-bottom: 15px; }
+    .search-bar input {
+      width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ced4da; border-radius: 6px;
     }
 
-    body.dark-mode {
-      --bg-color: #121212;
-      --text-color: #e0e0e0;
-      --card-bg: #1e1e1e;
-      --header-bg: #111111;
-      --border-color: #444444;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      transition: background-color 0.3s, color 0.3s;
-    }
-
-    .hidden { display: none !important; }
-
-    /* Tela de Login */
-    .login-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    .login-card {
-      background: var(--card-bg);
-      padding: 35px 40px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      width: 100%;
-      max-width: 380px;
-      text-align: center;
-    }
-
-    .login-card h2 {
-      margin-bottom: 25px;
-      font-size: 22px;
-    }
-
-    .input-group {
-      margin-bottom: 15px;
-    }
-
-    .input-group input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-sizing: border-box;
-      font-size: 14px;
-    }
-
-    .btn-primary {
-      width: 100%;
-      padding: 12px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 15px;
-    }
-
-    .btn-primary:hover {
-      background-color: #0056b3;
-    }
-
-    .toggle-auth {
-      margin-top: 15px;
-      font-size: 13px;
-    }
-
-    .toggle-auth a {
-      color: #007bff;
-      text-decoration: none;
-    }
-
-    /* Barra Superior do App */
-    .top-bar {
-      background-color: var(--header-bg);
-      color: white;
-      padding: 12px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .user-badge {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 14px;
-    }
-
-    .badge-admin {
-      background-color: #dc3545;
-      color: white;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: bold;
-      text-transform: uppercase;
-    }
-
-    .top-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .top-actions button {
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      color: white;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .btn-dark-toggle { background-color: #e0a800; color: #222 !important; }
-    .btn-export { background-color: #17a2b8; }
-    .btn-fullscreen { background-color: #28a745; }
-    .btn-logout { background-color: #dc3545; }
-
-    .main-content {
-      padding: 15px;
-    }
-
-    /* Busca Geral */
-    .search-container {
-      margin-bottom: 15px;
-    }
-
-    .search-container input {
-      width: 100%;
-      padding: 12px 15px;
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
-      box-sizing: border-box;
-      font-size: 15px;
-      background-color: var(--card-bg);
-      color: var(--text-color);
-    }
-
-    /* Tabela */
-    .table-responsive {
-      overflow-x: auto;
-      background: var(--card-bg);
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-      text-align: left;
-    }
-
-    th, td {
-      padding: 10px 8px;
-      border-bottom: 1px solid var(--border-color);
-      vertical-align: middle;
-    }
-
-    th {
-      background-color: #222222;
-      color: #ffffff;
-      font-weight: bold;
-      text-transform: uppercase;
-      font-size: 12px;
-    }
-
-    .filter-row th {
-      background-color: #333333;
-      padding: 6px 4px;
-    }
-
-    .filter-row input, .filter-row select {
-      width: 100%;
-      padding: 4px;
-      border-radius: 4px;
-      border: 1px solid #666;
-      box-sizing: border-box;
-      font-size: 12px;
+    .table-container { overflow-x: auto; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    th { background-color: #212529; color: white; padding: 10px; text-transform: uppercase; font-size: 11px; }
+    td { padding: 10px; border-bottom: 1px solid #dee2e6; }
+    tr:hover { background-color: #f1f3f5; }
+    
+    .filter-select, .filter-input {
+      width: 100%; padding: 4px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; margin-top: 4px;
     }
 
     .btn-cifra {
-      background-color: #d9534f;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 4px;
-      text-decoration: none;
-      font-size: 12px;
-      display: inline-block;
-      font-weight: bold;
+      background-color: #dc3545; color: white; text-decoration: none; padding: 4px 10px;
+      border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;
     }
-
-    .badge-count {
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: bold;
-    }
-
-    .badge-likes { background-color: #e2e3e5; color: #383d41; }
-    .badge-access { background-color: #007bff; color: white; }
-    .dot-status { height: 12px; width: 12px; background-color: #b197fc; border-radius: 50%; display: inline-block; }
+    
+    .loading { text-align: center; padding: 20px; font-size: 16px; font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <!-- TELA DE LOGIN -->
-  <div id="login-screen" class="login-container">
-    <div class="login-card">
-      <h2 id="auth-title">Entrar no Rockonha</h2>
-      <form id="auth-form" onsubmit="handleAuth(event)">
-        <div class="input-group">
-          <input type="email" id="email" placeholder="Seu E-mail" required>
-        </div>
-        <div class="input-group">
-          <input type="password" id="password" placeholder="Sua Senha" required>
-        </div>
-        <button type="submit" class="btn-primary" id="btn-submit">Entrar</button>
-      </form>
-      <div class="toggle-auth">
-        <a href="#" id="auth-toggle-link" onclick="toggleAuthMode(event)">Não tem conta? Cadastre-se aqui</a>
-      </div>
+  <header>
+    <div class="user-info">
+      👤 marcos.angelo@ifal.edu.br <span class="badge">ADMINISTRADOR</span>
     </div>
+    <div class="actions">
+      <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
+      <button class="btn btn-blue" onclick="exportarCSV()">⬇️ Exportar CSV</button>
+      <button class="btn btn-green" onclick="abrirTelaCheia()">↗️ Tela Cheia</button>
+      <button class="btn btn-red" onclick="sair()">Sair</button>
+    </div>
+  </header>
+
+  <div class="search-bar">
+    <input type="text" id="buscaGeral" placeholder="🔍 Busca Geral (Pesquise qualquer coisa aqui...)" oninput="filtrarData()">
   </div>
 
-  <!-- TELA PRINCIPAL DO REPERTÓRIO -->
-  <div id="app-screen" class="hidden">
-    <div class="top-bar">
-      <div class="user-badge">
-        👤 <span id="user-email-display">usuario@ifal.edu.br</span>
-        <span class="badge-admin">ADMINISTRADOR</span>
-      </div>
-      <div class="top-actions">
-        <button class="btn-dark-toggle" onclick="toggleDarkMode()">🌙 Escuro</button>
-        <button class="btn-export" onclick="exportarCSV()">⬇️ Exportar CSV</button>
-        <button class="btn-fullscreen" onclick="toggleTelaCheia()">↗️ Tela Cheia</button>
-        <button class="btn-logout" onclick="fazerLogout()">Sair</button>
-      </div>
-    </div>
-
-    <div class="main-content">
-      <div class="search-container">
-        <input type="text" id="global-search" placeholder="🔍 Busca Geral (Pesquise qualquer coisa aqui...)" oninput="filtrarTabela()">
-      </div>
-
-      <div class="table-responsive">
-        <table id="repertorio-table">
-          <thead>
-            <tr>
-              <th>Nº</th>
-              <th>ESTILO</th>
-              <th>BANDA / ARTISTA</th>
-              <th>MÚSICA</th>
-              <th>TOM</th>
-              <th>CIFRA</th>
-              <th>❤️ MEU</th>
-              <th>👍 LIKES</th>
-              <th>ACESSOS</th>
-              <th>⚠️ ERRO</th>
-            </tr>
-            <tr class="filter-row">
-              <th><input type="text" id="filter-no" oninput="filtrarTabela()" placeholder="Nº..."></th>
-              <th>
-                <select id="filter-estilo" onchange="filtrarTabela()">
-                  <option value="">Todos</option>
-                  <option value="Pop Rock Internacional">Pop Rock Internacional</option>
-                  <option value="Pop Rock Nacional">Pop Rock Nacional</option>
-                  <option value="Hard Rock">Hard Rock</option>
-                </select>
-              </th>
-              <th>
-                <select id="filter-banda" onchange="filtrarTabela()">
-                  <option value="">Todas</option>
-                  <option value="A-ha">A-ha</option>
-                </select>
-              </th>
-              <th><input type="text" id="filter-musica" oninput="filtrarTabela()" placeholder="Música..."></th>
-              <th>
-                <select id="filter-tom" onchange="filtrarTabela()">
-                  <option value="">Todos</option>
-                  <option value="C">C</option>
-                  <option value="D">D</option>
-                  <option value="Bm">Bm</option>
-                </select>
-              </th>
-              <th>
-                <select id="filter-cifra" onchange="filtrarTabela()">
-                  <option value="">Todos</option>
-                </select>
-              </th>
-              <th>
-                <select id="filter-meu" onchange="filtrarTabela()">
-                  <option value="">Todas</option>
-                </select>
-              </th>
-              <th>
-                <select id="filter-likes" onchange="filtrarTabela()">
-                  <option value="">Todos</option>
-                </select>
-              </th>
-              <th>
-                <select id="filter-acessos" onchange="filtrarTabela()">
-                  <option value="">Todos</option>
-                </select>
-              </th>
-              <th>
-                <select id="filter-erro" onchange="filtrarTabela()">
-                  <option value="">Todos</option>
-                </select>
-              </th>
-            </tr>
-          </thead>
-          <tbody id="table-body">
-            <!-- Linhas do repertório geradas dinamicamente -->
-          </tbody>
-        </table>
-      </div>
-    </div>
+  <div class="table-container">
+    <table id="tabelaRepertorio">
+      <thead>
+        <tr>
+          <th>Nº</th>
+          <th>Estilo<br><select id="filtroEstilo" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th>Banda / Artista<br><select id="filtroBanda" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
+          <th>Música<br><input type="text" id="filtroMusica" class="filter-input" placeholder="Música..." oninput="filtrarData()"></th>
+          <th>Tom<br><select id="filtroTom" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th>Cifra</th>
+        </tr>
+      </thead>
+      <tbody id="corpoTabela">
+        <tr><td colspan="6" class="loading">Carregando repertório da Planilha Google...</td></tr>
+      </tbody>
+    </table>
   </div>
 
   <script>
-    // Banco de Dados Local do Repertório
-    let repertorio = [
-      { id: 1, estilo: "Pop Rock Internacional", banda: "A-ha", musica: "Hunting High And Low", tom: "C", cifra: "#", meu: false, likes: 0, acessos: 0, erro: false },
-      { id: 2, estilo: "Pop Rock Internacional", banda: "A-ha", musica: "Stay On These Roads", tom: "D", cifra: "#", meu: false, likes: 0, acessos: 0, erro: false },
-      { id: 3, estilo: "Pop Rock Internacional", banda: "A-ha", musica: "Take On Me", tom: "Bm", cifra: "#", meu: false, likes: 0, acessos: 1, erro: false },
-      { id: 4, estilo: "Pop Rock Internacional", banda: "A-ha", musica: "Hunting High And Low", tom: "C", cifra: "#", meu: false, likes: 0, acessos: 0, erro: false },
-      { id: 5, estilo: "Pop Rock Internacional", banda: "A-ha", musica: "Stay On These Roads", tom: "D", cifra: "#", meu: false, likes: 0, acessos: 0, erro: false },
-      { id: 6, estilo: "Pop Rock Internacional", banda: "A-ha", musica: "Take On Me", tom: "Bm", cifra: "#", meu: false, likes: 0, acessos: 0, erro: false },
-      { id: 7, estilo: "Pop Rock Internacional", banda: "A-ha", musica: "Take On Me", tom: "Bm", cifra: "#", meu: false, likes: 0, acessos: 0, erro: false }
-    ];
+    // Link CSV fornecido da Planilha Google
+    const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
 
-    let isLoginMode = true;
+    let repertorioOriginal = [];
 
-    // Alternar entre Login e Cadastro
-    function toggleAuthMode(event) {
-      event.preventDefault();
-      isLoginMode = !isLoginMode;
-      document.getElementById('auth-title').innerText = isLoginMode ? 'Entrar no Rockonha' : 'Criar Conta no Rockonha';
-      document.getElementById('btn-submit').innerText = isLoginMode ? 'Entrar' : 'Cadastrar';
-      document.getElementById('auth-toggle-link').innerText = isLoginMode ? 'Não tem conta? Cadastre-se aqui' : 'Já tem conta? Faça login aqui';
+    function carregarPlanilha() {
+      Papa.parse(PLANILHA_CSV_URL, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          repertorioOriginal = results.data.map((item, index) => ({
+            num: item['Seq.'] || item['Seq'] || (index + 1),
+            estilo: item['Stilo'] || item['Estilo'] || '',
+            banda: item['Banda'] || item['Artista'] || '',
+            musica: item['Música'] || item['Musica'] || '',
+            tom: item['Tom'] || '',
+            cifra: item['Links das Cifras'] || item['Cifra'] || '#'
+          })).filter(m => m.musica);
+
+          preencherFiltros(repertorioOriginal);
+          renderizarTabela(repertorioOriginal);
+        },
+        error: function(err) {
+          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="6" style="color:red; text-align:center;">Erro ao carregar planilha. Verifique se a planilha está aberta para acesso.</td></tr>';
+        }
+      });
     }
 
-    // Processar Login
-    function handleAuth(event) {
-      event.preventDefault();
-      const email = document.getElementById('email').value;
-      document.getElementById('user-email-display').innerText = email;
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('app-screen').classList.remove('hidden');
-      renderTable(repertorio);
+    function preencherFiltros(dados) {
+      const estilos = [...new Set(dados.map(d => d.estilo))].filter(Boolean).sort();
+      const bandas = [...new Set(dados.map(d => d.banda))].filter(Boolean).sort();
+      const tons = [...new Set(dados.map(d => d.tom))].filter(Boolean).sort();
+
+      preencherSelect('filtroEstilo', estilos);
+      preencherSelect('filtroBanda', bandas);
+      preencherSelect('filtroTom', tons);
     }
 
-    function fazerLogout() {
-      document.getElementById('app-screen').classList.add('hidden');
-      document.getElementById('login-screen').classList.remove('hidden');
+    function preencherSelect(id, lista) {
+      const select = document.getElementById(id);
+      select.innerHTML = select.children[0].outerHTML;
+      lista.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        select.appendChild(opt);
+      });
     }
 
-    // Renderizar Tabela de Músicas
-    function renderTable(dados) {
-      const tbody = document.getElementById('table-body');
-      tbody.innerHTML = '';
-      dados.forEach(item => {
+    function renderizarTabela(dados) {
+      const corpo = document.getElementById('corpoTabela');
+      corpo.innerHTML = '';
+
+      if (dados.length === 0) {
+        corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhuma música encontrada.</td></tr>';
+        return;
+      }
+
+      dados.forEach((item) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${item.id}</td>
+          <td>${item.num}</td>
           <td>${item.estilo}</td>
-          <td><strong>${item.banda}</strong></td>
+          <td><b>${item.banda}</b></td>
           <td>${item.musica}</td>
-          <td><span style="background:#eee; padding:2px 6px; border-radius:4px; font-weight:bold; color:#333;">${item.tom}</span></td>
-          <td><a href="${item.cifra}" class="btn-cifra">🎸 Cifra</a></td>
-          <td><span style="color:#ccc; cursor:pointer;">🤍</span></td>
-          <td><span class="badge-count badge-likes">👍 ${item.likes}</span></td>
-          <td><span class="badge-count badge-access">${item.acessos}</span></td>
-          <td><span class="dot-status"></span></td>
+          <td><b>${item.tom}</b></td>
+          <td>
+            ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" rel="noopener noreferrer" class="btn-cifra">📌 Cifra</a>` : '-'}
+          </td>
         `;
-        tbody.appendChild(tr);
+        corpo.appendChild(tr);
       });
     }
 
-    // Sistema de Filtros
-    function filtrarTabela() {
-      const global = document.getElementById('global-search').value.toLowerCase();
-      const no = document.getElementById('filter-no').value.toLowerCase();
-      const estilo = document.getElementById('filter-estilo').value;
-      const banda = document.getElementById('filter-banda').value;
-      const musica = document.getElementById('filter-musica').value.toLowerCase();
-      const tom = document.getElementById('filter-tom').value;
+    function filtrarData() {
+      const busca = document.getElementById('buscaGeral').value.toLowerCase();
+      const estilo = document.getElementById('filtroEstilo').value;
+      const banda = document.getElementById('filtroBanda').value;
+      const musica = document.getElementById('filtroMusica').value.toLowerCase();
+      const tom = document.getElementById('filtroTom').value;
 
-      const filtrados = repertorio.filter(item => {
-        const matchGlobal = Object.values(item).some(val => String(val).toLowerCase().includes(global));
-        const matchNo = !no || String(item.id).includes(no);
-        const matchEstilo = !estilo || item.estilo === estilo;
-        const matchBanda = !banda || item.banda === banda;
-        const matchMusica = !musica || item.musica.toLowerCase().includes(musica);
-        const matchTom = !tom || item.tom === tom;
+      const filtrados = repertorioOriginal.filter(item => {
+        const atendeGeral = !busca || 
+          item.estilo.toLowerCase().includes(busca) ||
+          item.banda.toLowerCase().includes(busca) ||
+          item.musica.toLowerCase().includes(busca) ||
+          item.tom.toLowerCase().includes(busca);
 
-        return matchGlobal && matchNo && matchEstilo && matchBanda && matchMusica && matchTom;
+        const atendeEstilo = !estilo || item.estilo === estilo;
+        const atendeBanda = !banda || item.banda === banda;
+        const atendeMusica = !musica || item.musica.toLowerCase().includes(musica);
+        const atendeTom = !tom || item.tom === tom;
+
+        return atendeGeral && atendeEstilo && atendeBanda && atendeMusica && atendeTom;
       });
 
-      renderTable(filtrados);
+      renderizarTabela(filtrados);
     }
 
-    // Função do Botão "Tela Cheia"
-    function toggleTelaCheia() {
-      if (window.self !== window.top) {
-        window.open(window.location.href, '_blank');
-      } else {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen();
-        } else {
-          document.exitFullscreen();
-        }
-      }
-    }
-
-    // Modo Escuro
-    function toggleDarkMode() {
-      document.body.classList.toggle('dark-mode');
-    }
-
-    // Exportação em CSV
+    function abrirTelaCheia() { window.open(window.location.href, '_blank'); }
+    function toggleDarkMode() { document.body.style.filter = document.body.style.filter ? '' : 'invert(0.9) hue-rotate(180deg)'; }
     function exportarCSV() {
-      let csv = 'No,Estilo,Banda,Musica,Tom\n';
-      repertorio.forEach(item => {
-        csv += `${item.id},"${item.estilo}","${item.banda}","${item.musica}",${item.tom}\n`;
-      });
+      let csv = 'Nº,Estilo,Banda,Musica,Tom,Cifra\n';
+      repertorioOriginal.forEach(r => { csv += `"${r.num}","${r.estilo}","${r.banda}","${r.musica}","${r.tom}","${r.cifra}"\n`; });
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -462,6 +196,9 @@
       a.download = 'repertorio_rockonha.csv';
       a.click();
     }
+    function sair() { alert('Sessão encerrada.'); }
+
+    carregarPlanilha();
   </script>
 </body>
 </html>
