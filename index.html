@@ -43,7 +43,6 @@
     tbody td { padding: 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; white-space: nowrap; }
     tbody tr:hover { background-color: #f8f9fa; }
 
-    /* Badges e Botões de Ação */
     .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; font-size: 12px; }
     .btn-cifra {
       background-color: #dc3545; color: white; text-decoration: none; padding: 4px 10px;
@@ -132,13 +131,13 @@
 
   <script>
     const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
+    
+    // Cole aqui o URL gerado no Apps Script (Passo 1). Se deixado em branco, abre confirmação local.
+    const SCRIPT_ERRO_URL = ''; 
 
     let repertorioOriginal = [];
-
-    // Estado salvo localmente no navegador
     let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
     let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
-    let errosLocais = JSON.parse(localStorage.getItem('rock_erros') || '[]');
 
     function carregarPlanilha() {
       Papa.parse(PLANILHA_CSV_URL, {
@@ -146,17 +145,23 @@
         header: true,
         skipEmptyLines: true,
         complete: function(results) {
-          repertorioOriginal = results.data.map((item, index) => ({
-            id: String(item['Seq.'] || item['Seq'] || (index + 1)),
-            num: item['Seq.'] || item['Seq'] || (index + 1),
-            estilo: item['Stilo'] || item['Estilo'] || '',
-            banda: item['Banda'] || item['Artista'] || '',
-            musica: item['Música'] || item['Musica'] || '',
-            tom: item['Tom'] || '',
-            cifra: item['Links das Cifras'] || item['Cifra'] || '#',
-            likes: parseInt(item['Likes'] || '0', 10),
-            acessos: item['Acessos'] || '0'
-          })).filter(m => m.musica);
+          repertorioOriginal = results.data.map((item, index) => {
+            const erroValor = item['Erro'] || item['ERRO'] || '';
+            const temErroConsolidado = erroValor.includes('⚠️') || erroValor.toLowerCase().includes('sim') || erroValor === '1';
+
+            return {
+              id: String(item['Seq.'] || item['Seq'] || (index + 1)),
+              num: item['Seq.'] || item['Seq'] || (index + 1),
+              estilo: item['Stilo'] || item['Estilo'] || '',
+              banda: item['Banda'] || item['Artista'] || '',
+              musica: item['Música'] || item['Musica'] || '',
+              tom: item['Tom'] || '',
+              cifra: item['Links das Cifras'] || item['Cifra'] || '#',
+              likes: parseInt(item['Likes'] || '0', 10),
+              acessos: item['Acessos'] || '0',
+              temErro: temErroConsolidado
+            };
+          }).filter(m => m.musica);
 
           preencherFiltros(repertorioOriginal);
           renderizarTabela(repertorioOriginal);
@@ -201,7 +206,6 @@
         const isFav = favoritos.includes(item.id);
         const hasLike = !!likesLocais[item.id];
         const totalLikes = item.likes + (hasLike ? 1 : 0);
-        const hasErro = errosLocais.includes(item.id);
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -214,7 +218,7 @@
             ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra">📌 Cifra</a>` : '-'}
           </td>
           <td>
-            <button class="btn-action" onclick="toggleFavorito('${item.id}')" title="Favoritar">
+            <button class="btn-action" onclick="toggleFavorito('${item.id}')" title="Favoritar (Meu)">
               ${isFav ? '❤️' : '🤍'}
             </button>
           </td>
@@ -225,8 +229,8 @@
           </td>
           <td><span class="pill-acesso">${item.acessos}</span></td>
           <td>
-            <button class="btn-action" onclick="toggleErro('${item.id}')" title="Reportar Erro">
-              ${hasErro ? '⚠️' : '🟣'}
+            <button class="btn-action" onclick="reportarErro('${item.id}', '${item.musica.replace(/'/g, "\\'")}')" title="Reportar erro ao Administrador">
+              ${item.temErro ? '⚠️' : '🟣'}
             </button>
           </td>
         `;
@@ -234,7 +238,6 @@
       });
     }
 
-    // Funções de Ação
     function toggleFavorito(id) {
       const idx = favoritos.indexOf(id);
       if (idx > -1) favoritos.splice(idx, 1);
@@ -250,12 +253,16 @@
       filtrarData();
     }
 
-    function toggleErro(id) {
-      const idx = errosLocais.indexOf(id);
-      if (idx > -1) errosLocais.splice(idx, 1);
-      else errosLocais.push(id);
-      localStorage.setItem('rock_erros', JSON.stringify(errosLocais));
-      filtrarData();
+    function reportarErro(id, titulo) {
+      if (confirm(`Deseja notificar o Administrador sobre um erro na música "${titulo}"?`)) {
+        if (SCRIPT_ERRO_URL) {
+          fetch(`${SCRIPT_ERRO_URL}?id=${id}`, { mode: 'no-cors' })
+            .then(() => alert('Erro reportado ao Administrador com sucesso!'))
+            .catch(() => alert('Falha ao enviar reporte.'));
+        } else {
+          alert('Erro sinalizado! (Obs: Configure o SCRIPT_ERRO_URL no código para gravar automaticamente na Planilha Google).');
+        }
+      }
     }
 
     function filtrarData() {
@@ -272,7 +279,6 @@
       const filtrados = repertorioOriginal.filter(item => {
         const isFav = favoritos.includes(item.id);
         const hasLike = !!likesLocais[item.id];
-        const hasErro = errosLocais.includes(item.id);
 
         const atendeGeral = !busca || 
           String(item.num).toLowerCase().includes(busca) ||
@@ -288,7 +294,7 @@
         const atendeTom = !tom || item.tom === tom;
         const atendeMeu = !meu || (meu === 'fav' && isFav);
         const atendeLikes = !likesFilter || (likesFilter === 'liked' && hasLike);
-        const atendeErro = !erroFilter || (erroFilter === 'erro' && hasErro);
+        const atendeErro = !erroFilter || (erroFilter === 'erro' && item.temErro);
 
         return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom && atendeMeu && atendeLikes && atendeErro;
       });
@@ -296,15 +302,12 @@
       renderizarTabela(filtrados);
     }
 
-    // Tela Cheia compatível com iFrames (Google Sites)
     function toggleTelaCheia() {
       const isIframe = window.self !== window.top;
-      
       if (isIframe) {
         window.open(window.location.href, '_blank');
         return;
       }
-
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         const el = document.documentElement;
         if (el.requestFullscreen) el.requestFullscreen();
