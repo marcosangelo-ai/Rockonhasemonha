@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rockonhasemonha - Repertório</title>
-  <!-- PapaParse para ler a planilha em tempo real -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
@@ -31,18 +30,28 @@
 
     .table-container { overflow-x: auto; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-    th { background-color: #212529; color: white; padding: 10px; text-transform: uppercase; font-size: 11px; }
-    td { padding: 10px; border-bottom: 1px solid #dee2e6; }
-    tr:hover { background-color: #f1f3f5; }
     
+    thead tr.header-titles { background-color: #212529; color: white; }
+    thead tr.header-titles th { padding: 10px 8px; font-size: 11px; text-transform: uppercase; font-weight: bold; white-space: nowrap; }
+    
+    thead tr.header-filters { background-color: #212529; }
+    thead tr.header-filters th { padding: 0 6px 8px 6px; }
+
     .filter-select, .filter-input {
-      width: 100%; padding: 4px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; margin-top: 4px;
+      width: 100%; padding: 5px; font-size: 12px; border: 1px solid #ced4da; border-radius: 4px; background: white; color: #333;
     }
 
+    td { padding: 10px 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; }
+    tr:hover { background-color: #f8f9fa; }
+
+    /* Estilos das Badges da versão original */
+    .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; }
     .btn-cifra {
-      background-color: #dc3545; color: white; text-decoration: none; padding: 4px 10px;
-      border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;
+      background-color: #dc3545; color: white; text-decoration: none; padding: 4px 8px;
+      border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;
     }
+    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: bold; display: inline-block; }
+    .pill-acesso { background-color: #0d6efd; color: white; border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: bold; display: inline-block; }
     
     .loading { text-align: center; padding: 20px; font-size: 16px; font-weight: bold; }
   </style>
@@ -56,7 +65,7 @@
     <div class="actions">
       <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
       <button class="btn btn-blue" onclick="exportarCSV()">⬇️ Exportar CSV</button>
-      <button class="btn btn-green" onclick="abrirTelaCheia()">↗️ Tela Cheia</button>
+      <button class="btn btn-green" onclick="toggleTelaCheia()">↗️ Tela Cheia</button>
       <button class="btn btn-red" onclick="sair()">Sair</button>
     </div>
   </header>
@@ -68,23 +77,38 @@
   <div class="table-container">
     <table id="tabelaRepertorio">
       <thead>
-        <tr>
+        <tr class="header-titles">
           <th>Nº</th>
-          <th>Estilo<br><select id="filtroEstilo" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
-          <th>Banda / Artista<br><select id="filtroBanda" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
-          <th>Música<br><input type="text" id="filtroMusica" class="filter-input" placeholder="Música..." oninput="filtrarData()"></th>
-          <th>Tom<br><select id="filtroTom" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
-          <th>Cifra</th>
+          <th>ESTILO</th>
+          <th>BANDA / ARTISTA</th>
+          <th>MÚSICA</th>
+          <th>TOM</th>
+          <th>CIFRA</th>
+          <th>❤️ MEU</th>
+          <th>👍 LIKES</th>
+          <th>ACESSOS</th>
+          <th>⚠️ ERRO</th>
+        </tr>
+        <tr class="header-filters">
+          <th><input type="text" id="filtroNum" class="filter-input" placeholder="Nº..." oninput="filtrarData()"></th>
+          <th><select id="filtroEstilo" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroBanda" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
+          <th><input type="text" id="filtroMusica" class="filter-input" placeholder="Música..." oninput="filtrarData()"></th>
+          <th><select id="filtroTom" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroCifra" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroMeu" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
+          <th><select id="filtroLikes" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroAcessos" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroErro" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
         </tr>
       </thead>
       <tbody id="corpoTabela">
-        <tr><td colspan="6" class="loading">Carregando repertório da Planilha Google...</td></tr>
+        <tr><td colspan="10" class="loading">Carregando repertório da Planilha Google...</td></tr>
       </tbody>
     </table>
   </div>
 
   <script>
-    // Link CSV fornecido da Planilha Google
     const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
 
     let repertorioOriginal = [];
@@ -101,14 +125,18 @@
             banda: item['Banda'] || item['Artista'] || '',
             musica: item['Música'] || item['Musica'] || '',
             tom: item['Tom'] || '',
-            cifra: item['Links das Cifras'] || item['Cifra'] || '#'
+            cifra: item['Links das Cifras'] || item['Cifra'] || '#',
+            meu: item['Meu'] || '🤍',
+            likes: item['Likes'] || '0',
+            acessos: item['Acessos'] || '0',
+            erro: item['Erro'] || '🟣'
           })).filter(m => m.musica);
 
           preencherFiltros(repertorioOriginal);
           renderizarTabela(repertorioOriginal);
         },
-        error: function(err) {
-          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="6" style="color:red; text-align:center;">Erro ao carregar planilha. Verifique se a planilha está aberta para acesso.</td></tr>';
+        error: function() {
+          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="10" style="color:red; text-align:center;">Erro ao carregar planilha. Verifique se o link está publicado público.</td></tr>';
         }
       });
     }
@@ -139,7 +167,7 @@
       corpo.innerHTML = '';
 
       if (dados.length === 0) {
-        corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhuma música encontrada.</td></tr>';
+        corpo.innerHTML = '<tr><td colspan="10" style="text-align:center;">Nenhuma música encontrada.</td></tr>';
         return;
       }
 
@@ -150,10 +178,14 @@
           <td>${item.estilo}</td>
           <td><b>${item.banda}</b></td>
           <td>${item.musica}</td>
-          <td><b>${item.tom}</b></td>
+          <td><span class="tom-badge">${item.tom}</span></td>
           <td>
-            ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" rel="noopener noreferrer" class="btn-cifra">📌 Cifra</a>` : '-'}
+            ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra">📌 Cifra</a>` : '-'}
           </td>
+          <td>🤍</td>
+          <td><span class="pill-like">👍 ${item.likes}</span></td>
+          <td><span class="pill-acesso">${item.acessos}</span></td>
+          <td>🟣</td>
         `;
         corpo.appendChild(tr);
       });
@@ -161,6 +193,7 @@
 
     function filtrarData() {
       const busca = document.getElementById('buscaGeral').value.toLowerCase();
+      const num = document.getElementById('filtroNum').value.toLowerCase();
       const estilo = document.getElementById('filtroEstilo').value;
       const banda = document.getElementById('filtroBanda').value;
       const musica = document.getElementById('filtroMusica').value.toLowerCase();
@@ -168,23 +201,37 @@
 
       const filtrados = repertorioOriginal.filter(item => {
         const atendeGeral = !busca || 
+          String(item.num).toLowerCase().includes(busca) ||
           item.estilo.toLowerCase().includes(busca) ||
           item.banda.toLowerCase().includes(busca) ||
           item.musica.toLowerCase().includes(busca) ||
           item.tom.toLowerCase().includes(busca);
 
+        const atendeNum = !num || String(item.num).toLowerCase().includes(num);
         const atendeEstilo = !estilo || item.estilo === estilo;
         const atendeBanda = !banda || item.banda === banda;
         const atendeMusica = !musica || item.musica.toLowerCase().includes(musica);
         const atendeTom = !tom || item.tom === tom;
 
-        return atendeGeral && atendeEstilo && atendeBanda && atendeMusica && atendeTom;
+        return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom;
       });
 
       renderizarTabela(filtrados);
     }
 
-    function abrirTelaCheia() { window.open(window.location.href, '_blank'); }
+    // Alternar modo Tela Cheia real (Entrar e Sair)
+    function toggleTelaCheia() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          alert("Não foi possível ativar a tela cheia: " + err.message);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
     function toggleDarkMode() { document.body.style.filter = document.body.style.filter ? '' : 'invert(0.9) hue-rotate(180deg)'; }
     function exportarCSV() {
       let csv = 'Nº,Estilo,Banda,Musica,Tom,Cifra\n';
