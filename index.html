@@ -1,98 +1,100 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rockonhasemonha - Repertório</title>
-  <!-- PapaParse para ler a planilha em tempo real -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-body { background-color: #f4f6f9; color: #333; padding: 10px; }
-
-header {
-background-color: #212529; color: #fff; padding: 12px 20px;
-display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-border-radius: 6px; margin-bottom: 15px;
-}
-.user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 10px; }
-.badge { background: #dc3545; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
-.actions { display: flex; gap: 8px; }
-.btn { padding: 8px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; font-size: 13px; }
-.btn-green { background-color: #198754; }
-.btn-blue { background-color: #0dcaf0; color: #000; }
-.btn-dark { background-color: #ffc107; color: #000; }
-.btn-red { background-color: #dc3545; }
-
-.search-bar { width: 100%; margin-bottom: 15px; }
-.search-bar input {
-width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ced4da; border-radius: 6px;
-}
-
-.table-container { overflow-x: auto; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-    th { background-color: #212529; color: white; padding: 10px; text-transform: uppercase; font-size: 11px; }
-    td { padding: 10px; border-bottom: 1px solid #dee2e6; }
-    tr:hover { background-color: #f1f3f5; }
-
-    thead tr.header-titles { background-color: #212529; color: white; }
-    thead tr.header-titles th { padding: 10px 8px; font-size: 11px; text-transform: uppercase; font-weight: bold; white-space: nowrap; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rockonhasemonha - Repertório</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background-color: #f4f6f9; color: #333; padding: 12px; overflow-x: hidden; }
     
-    thead tr.header-filters { background-color: #212529; }
-    thead tr.header-filters th { padding: 0 6px 8px 6px; }
+    header {
+      background-color: #212529; color: #fff; padding: 10px 16px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+      border-radius: 6px; margin-bottom: 12px;
+    }
+    .user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .badge-admin { background: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    .evento-ativo-badge { background: #198754; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; display: none; }
+    
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { padding: 8px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-dark { background-color: #ffc107; color: #000; }
+    .btn-blue { background-color: #0dcaf0; color: #000; }
+    .btn-green { background-color: #198754; color: #fff; }
+    .btn-red { background-color: #dc3545; color: #fff; }
+    .btn-purple { background-color: #6f42c1; color: #fff; }
 
-.filter-select, .filter-input {
-      width: 100%; padding: 4px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; margin-top: 4px;
-      width: 100%; padding: 5px; font-size: 12px; border: 1px solid #ced4da; border-radius: 4px; background: white; color: #333;
-}
+    .search-bar { width: 100%; margin-bottom: 12px; }
+    .search-bar input {
+      width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #ced4da; border-radius: 6px; background: white;
+    }
 
-    td { padding: 10px 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; }
-    tr:hover { background-color: #f8f9fa; }
+    /* BARRA HORIZONTAL E CONTAINER */
+    .table-container { 
+      width: 100%; max-width: 100vw; overflow-x: auto; 
+      -webkit-overflow-scrolling: touch; background: white; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); 
+    }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 1000px; }
+    thead { background-color: #212529; color: white; }
+    thead tr.titles th { padding: 10px 8px 4px 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
+    thead tr.filters th { padding: 4px 6px 10px 6px; }
 
-    /* Estilos das Badges da versão original */
-    .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; }
-.btn-cifra {
-      background-color: #dc3545; color: white; text-decoration: none; padding: 4px 10px;
-      border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;
-      background-color: #dc3545; color: white; text-decoration: none; padding: 4px 8px;
-      border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;
-}
-    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: bold; display: inline-block; }
-    .pill-acesso { background-color: #0d6efd; color: white; border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: bold; display: inline-block; }
+    .filter-select, .filter-input { width: 100%; padding: 4px 6px; font-size: 12px; border: 1px solid #495057; border-radius: 4px; background: #fff; color: #212529; }
+    tbody td { padding: 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; white-space: nowrap; }
+    tbody tr:hover { background-color: #f8f9fa; }
 
-.loading { text-align: center; padding: 20px; font-size: 16px; font-weight: bold; }
-</style>
+    .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; font-size: 12px; }
+    .btn-cifra { background-color: #dc3545; color: white; text-decoration: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-action { background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 12px; transition: transform 0.1s; }
+    .btn-action:hover { transform: scale(1.2); }
+    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #ced4da; }
+    .pill-like.active { background-color: #ffc107; color: #000; border-color: #ffc107; }
+    .pill-acesso { background-color: #0d6efd; color: white; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-block; }
+    
+    .loading { text-align: center; padding: 25px; font-size: 15px; font-weight: bold; color: #555; }
+
+    /* PAGINAÇÃO */
+    .paginacao { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 15px; background: white; border-top: 1px solid #ddd; }
+    .paginacao span { font-weight: bold; font-size: 14px; }
+
+    /* JANELAS MODAIS */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; }
+    .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; color: #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .modal-content h3 { margin-bottom: 15px; font-size: 18px; }
+    .modal-content input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+    .lista-eventos-modal { max-height: 200px; overflow-y: auto; margin-bottom: 15px; padding-left: 20px; }
+    
+    #toast { display: none; position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 6px; z-index: 10001; font-weight: bold; }
+  </style>
 </head>
 <body>
 
-<header>
-<div class="user-info">
-👤 marcos.angelo@ifal.edu.br <span class="badge">ADMINISTRADOR</span>
-</div>
-<div class="actions">
-<button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
-<button class="btn btn-blue" onclick="exportarCSV()">⬇️ Exportar CSV</button>
-      <button class="btn btn-green" onclick="abrirTelaCheia()">↗️ Tela Cheia</button>
-      <button class="btn btn-green" onclick="toggleTelaCheia()">↗️ Tela Cheia</button>
-<button class="btn btn-red" onclick="sair()">Sair</button>
-</div>
-</header>
+  <header>
+    <div class="user-info">
+      👤 marcos.angelo@ifal.edu.br <span class="badge-admin">ADMINISTRADOR</span>
+      <span id="badgeEventoAtivo" class="evento-ativo-badge">📍 Evento: Nenhum</span>
+    </div>
+    <div class="actions">
+      <button class="btn btn-purple" onclick="abrirModalEventos()">📅 Eventos (Admin)</button>
+      <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
+      <button class="btn btn-blue" onclick="exportarCSV()">⬇️ Exportar CSV</button>
+      <button class="btn btn-green" id="btnTelaCheia" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
+      <button class="btn btn-red" onclick="sair()">Sair</button>
+    </div>
+  </header>
 
-<div class="search-bar">
-<input type="text" id="buscaGeral" placeholder="🔍 Busca Geral (Pesquise qualquer coisa aqui...)" oninput="filtrarData()">
-</div>
+  <div class="search-bar">
+    <input type="text" id="buscaGeral" placeholder="🔍 Busca Geral (Pesquise qualquer coisa aqui...)" oninput="filtrarData()">
+  </div>
 
-<div class="table-container">
-<table id="tabelaRepertorio">
-<thead>
-        <tr>
-        <tr class="header-titles">
-<th>Nº</th>
-          <th>Estilo<br><select id="filtroEstilo" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
-          <th>Banda / Artista<br><select id="filtroBanda" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
-          <th>Música<br><input type="text" id="filtroMusica" class="filter-input" placeholder="Música..." oninput="filtrarData()"></th>
-          <th>Tom<br><select id="filtroTom" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
-          <th>Cifra</th>
+  <div class="table-container">
+    <table id="tabelaRepertorio">
+      <thead>
+        <tr class="titles">
+          <th>Nº</th>
           <th>ESTILO</th>
           <th>BANDA / ARTISTA</th>
           <th>MÚSICA</th>
@@ -101,174 +103,362 @@ table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13p
           <th>❤️ MEU</th>
           <th>👍 LIKES</th>
           <th>ACESSOS</th>
+          <th>📌 INDICAÇÃO</th>
           <th>⚠️ ERRO</th>
         </tr>
-        <tr class="header-filters">
+        <tr class="filters">
           <th><input type="text" id="filtroNum" class="filter-input" placeholder="Nº..." oninput="filtrarData()"></th>
           <th><select id="filtroEstilo" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
           <th><select id="filtroBanda" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
           <th><input type="text" id="filtroMusica" class="filter-input" placeholder="Música..." oninput="filtrarData()"></th>
           <th><select id="filtroTom" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
           <th><select id="filtroCifra" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
-          <th><select id="filtroMeu" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
-          <th><select id="filtroLikes" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroMeu" class="filter-select" onchange="filtrarData()"><option value="">Todas</option><option value="fav">Favoritas (❤️)</option></select></th>
+          <th><select id="filtroLikes" class="filter-select" onchange="filtrarData()"><option value="">Todos</option><option value="liked">Curtidas (👍)</option></select></th>
           <th><select id="filtroAcessos" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
-          <th><select id="filtroErro" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
-</tr>
-</thead>
-<tbody id="corpoTabela">
-        <tr><td colspan="6" class="loading">Carregando repertório da Planilha Google...</td></tr>
-        <tr><td colspan="10" class="loading">Carregando repertório da Planilha Google...</td></tr>
-</tbody>
-</table>
-</div>
+          <th><select id="filtroIndicacao" class="filter-select" onchange="filtrarData()"><option value="">Todas</option><option value="indicado">Indicadas (✅)</option></select></th>
+          <th><select id="filtroErro" class="filter-select" onchange="filtrarData()"><option value="">Todos</option><option value="erro">Com Erro (🔴)</option></select></th>
+        </tr>
+      </thead>
+      <tbody id="corpoTabela">
+        <tr><td colspan="11" class="loading">Carregando repertório da Planilha Google...</td></tr>
+      </tbody>
+    </table>
+    <!-- PAGINAÇÃO DE 30 EM 30 -->
+    <div class="paginacao" id="paginacaoContainer" style="display:none;">
+      <button class="btn btn-blue" onclick="mudarPagina(-1)">◀ Anterior</button>
+      <span id="infoPagina">Página 1</span>
+      <button class="btn btn-blue" onclick="mudarPagina(1)">Próxima ▶</button>
+    </div>
+  </div>
 
-<script>
-    // Link CSV fornecido da Planilha Google
-const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
+  <!-- MODAL: Escolher Evento (Usuário) -->
+  <div id="modalEscolherEvento" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Selecione um Evento para Hoje</h3>
+      <p style="margin-bottom:10px; font-size:13px; color:#555;">Escolha para qual evento você deseja indicar músicas:</p>
+      <div id="listaEventosBotoes" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div class="modal-buttons">
+        <button class="btn btn-red" onclick="fecharModal('modalEscolherEvento')">Ignorar</button>
+      </div>
+    </div>
+  </div>
 
-let repertorioOriginal = [];
+  <!-- MODAL: Gerenciar Eventos (Admin) -->
+  <div id="modalGerenciarEvento" class="modal-overlay">
+    <div class="modal-content">
+      <h3>📅 Gerenciar Eventos</h3>
+      <p style="font-size:13px; margin-bottom:5px;">Eventos cadastrados:</p>
+      <ul id="listaEventosAdmin" class="lista-eventos-modal"></ul>
+      <input type="text" id="novoEventoInput" placeholder="Digite o nome de um novo evento...">
+      <div class="modal-buttons">
+        <button class="btn btn-red" onclick="fecharModal('modalGerenciarEvento')">Fechar</button>
+        <button class="btn btn-green" onclick="salvarNovoEvento()">Cadastrar</button>
+      </div>
+    </div>
+  </div>
 
-function carregarPlanilha() {
-Papa.parse(PLANILHA_CSV_URL, {
-download: true,
-header: true,
-skipEmptyLines: true,
-complete: function(results) {
-repertorioOriginal = results.data.map((item, index) => ({
-num: item['Seq.'] || item['Seq'] || (index + 1),
-estilo: item['Stilo'] || item['Estilo'] || '',
-banda: item['Banda'] || item['Artista'] || '',
-musica: item['Música'] || item['Musica'] || '',
-tom: item['Tom'] || '',
-            cifra: item['Links das Cifras'] || item['Cifra'] || '#'
-            cifra: item['Links das Cifras'] || item['Cifra'] || '#',
-            meu: item['Meu'] || '🤍',
-            likes: item['Likes'] || '0',
-            acessos: item['Acessos'] || '0',
-            erro: item['Erro'] || '🟣'
-})).filter(m => m.musica);
+  <div id="toast">Mensagem</div>
 
-preencherFiltros(repertorioOriginal);
-renderizarTabela(repertorioOriginal);
-},
-        error: function(err) {
-          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="6" style="color:red; text-align:center;">Erro ao carregar planilha. Verifique se a planilha está aberta para acesso.</td></tr>';
-        error: function() {
-          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="10" style="color:red; text-align:center;">Erro ao carregar planilha. Verifique se o link está publicado público.</td></tr>';
-}
-});
-}
+  <script>
+    const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
+    const SCRIPT_API_URL = '';
 
-function preencherFiltros(dados) {
-const estilos = [...new Set(dados.map(d => d.estilo))].filter(Boolean).sort();
-const bandas = [...new Set(dados.map(d => d.banda))].filter(Boolean).sort();
-const tons = [...new Set(dados.map(d => d.tom))].filter(Boolean).sort();
+    let repertorioOriginal = [];
+    let dadosFiltrados = [];
+    let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
+    let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
+    
+    // Variáveis Eventos
+    let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
+    let indicacoesPorEvento = JSON.parse(localStorage.getItem('rock_indicacoes') || '{}');
+    let eventoAtualSessao = sessionStorage.getItem('rock_evento_atual') || '';
 
-preencherSelect('filtroEstilo', estilos);
-preencherSelect('filtroBanda', bandas);
-preencherSelect('filtroTom', tons);
-}
+    // Paginação
+    let paginaAtual = 1;
+    const itensPorPagina = 30;
 
-function preencherSelect(id, lista) {
-const select = document.getElementById(id);
-select.innerHTML = select.children[0].outerHTML;
-lista.forEach(item => {
-const opt = document.createElement('option');
-opt.value = item;
-opt.textContent = item;
-select.appendChild(opt);
-});
-}
+    function mostrarToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 3000);
+    }
 
-function renderizarTabela(dados) {
-const corpo = document.getElementById('corpoTabela');
-corpo.innerHTML = '';
+    function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-if (dados.length === 0) {
-        corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhuma música encontrada.</td></tr>';
-        corpo.innerHTML = '<tr><td colspan="10" style="text-align:center;">Nenhuma música encontrada.</td></tr>';
-return;
-}
+    // TELA CHEIA - ABRE EM NOVA ABA NATIVAMENTE
+    function abrirEmNovaAba() {
+      window.open(window.location.href, '_blank');
+    }
 
-dados.forEach((item) => {
-const tr = document.createElement('tr');
-tr.innerHTML = `
-         <td>${item.num}</td>
-         <td>${item.estilo}</td>
-         <td><b>${item.banda}</b></td>
-         <td>${item.musica}</td>
-          <td><b>${item.tom}</b></td>
-          <td><span class="tom-badge">${item.tom}</span></td>
-         <td>
-            ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" rel="noopener noreferrer" class="btn-cifra">📌 Cifra</a>` : '-'}
-            ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra">📌 Cifra</a>` : '-'}
-         </td>
-          <td>🤍</td>
-          <td><span class="pill-like">👍 ${item.likes}</span></td>
-          <td><span class="pill-acesso">${item.acessos}</span></td>
-          <td>🟣</td>
-       `;
-corpo.appendChild(tr);
-});
-}
-
-function filtrarData() {
-const busca = document.getElementById('buscaGeral').value.toLowerCase();
-      const num = document.getElementById('filtroNum').value.toLowerCase();
-const estilo = document.getElementById('filtroEstilo').value;
-const banda = document.getElementById('filtroBanda').value;
-const musica = document.getElementById('filtroMusica').value.toLowerCase();
-const tom = document.getElementById('filtroTom').value;
-
-const filtrados = repertorioOriginal.filter(item => {
-const atendeGeral = !busca || 
-          String(item.num).toLowerCase().includes(busca) ||
-item.estilo.toLowerCase().includes(busca) ||
-item.banda.toLowerCase().includes(busca) ||
-item.musica.toLowerCase().includes(busca) ||
-item.tom.toLowerCase().includes(busca);
-
-        const atendeNum = !num || String(item.num).toLowerCase().includes(num);
-const atendeEstilo = !estilo || item.estilo === estilo;
-const atendeBanda = !banda || item.banda === banda;
-const atendeMusica = !musica || item.musica.toLowerCase().includes(musica);
-const atendeTom = !tom || item.tom === tom;
-
-        return atendeGeral && atendeEstilo && atendeBanda && atendeMusica && atendeTom;
-        return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom;
-});
-
-renderizarTabela(filtrados);
-}
-
-    function abrirTelaCheia() { window.open(window.location.href, '_blank'); }
-    // Alternar modo Tela Cheia real (Entrar e Sair)
-    function toggleTelaCheia() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-          alert("Não foi possível ativar a tela cheia: " + err.message);
+    function inicializarEventos() {
+      if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
+        const divBotoes = document.getElementById('listaEventosBotoes');
+        divBotoes.innerHTML = '';
+        eventosCadastrados.forEach(ev => {
+          const btn = document.createElement('button');
+          btn.className = 'btn btn-purple';
+          btn.textContent = ev;
+          btn.onclick = () => {
+            eventoAtualSessao = ev;
+            sessionStorage.setItem('rock_evento_atual', ev);
+            atualizarBadgeEvento();
+            fecharModal('modalEscolherEvento');
+            filtrarData();
+            mostrarToast('Evento selecionado: ' + ev);
+          };
+          divBotoes.appendChild(btn);
         });
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
+        abrirModal('modalEscolherEvento');
+      } else if (eventoAtualSessao) {
+        atualizarBadgeEvento();
       }
     }
 
-function toggleDarkMode() { document.body.style.filter = document.body.style.filter ? '' : 'invert(0.9) hue-rotate(180deg)'; }
-function exportarCSV() {
-let csv = 'Nº,Estilo,Banda,Musica,Tom,Cifra\n';
-repertorioOriginal.forEach(r => { csv += `"${r.num}","${r.estilo}","${r.banda}","${r.musica}","${r.tom}","${r.cifra}"\n`; });
-const blob = new Blob([csv], { type: 'text/csv' });
-const url = window.URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = 'repertorio_rockonha.csv';
-a.click();
-}
-function sair() { alert('Sessão encerrada.'); }
+    function atualizarBadgeEvento() {
+      const badge = document.getElementById('badgeEventoAtivo');
+      badge.style.display = 'inline-block';
+      badge.textContent = `📍 Evento: ${eventoAtualSessao}`;
+    }
 
-carregarPlanilha();
-</script>
+    function abrirModalEventos() {
+      const ul = document.getElementById('listaEventosAdmin');
+      ul.innerHTML = '';
+      if(eventosCadastrados.length === 0) {
+        ul.innerHTML = '<li style="font-size:13px; color:#666;">Nenhum evento...</li>';
+      } else {
+        eventosCadastrados.forEach(ev => {
+          let li = document.createElement('li');
+          li.textContent = ev;
+          ul.appendChild(li);
+        });
+      }
+      document.getElementById('novoEventoInput').value = '';
+      abrirModal('modalGerenciarEvento');
+    }
+
+    function salvarNovoEvento() {
+      const input = document.getElementById('novoEventoInput');
+      const novo = input.value.trim();
+      if(novo) {
+        eventosCadastrados.push(novo);
+        localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        fecharModal('modalGerenciarEvento');
+        mostrarToast('Evento cadastrado!');
+        setTimeout(() => location.reload(), 1000);
+      }
+    }
+
+    function carregarPlanilha() {
+      Papa.parse(PLANILHA_CSV_URL, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: function(results) {
+          repertorioOriginal = results.data.map((item, index) => {
+            const erroValor = item['Erro'] || item['ERRO'] || '';
+            const temErro = erroValor.includes('⚠️') || erroValor.includes('🔴') || erroValor.toLowerCase().includes('sim') || erroValor === '1';
+
+            return {
+              id: String(item['Seq.'] || item['Seq'] || (index + 1)),
+              num: item['Seq.'] || item['Seq'] || (index + 1),
+              estilo: item['Stilo'] || item['Estilo'] || '',
+              banda: item['Banda'] || item['Artista'] || '',
+              musica: item['Música'] || item['Musica'] || '',
+              tom: item['Tom'] || '',
+              cifra: item['Links das Cifras'] || item['Cifra'] || '#',
+              likes: parseInt(item['Likes'] || '0', 10),
+              acessos: parseInt(item['Acessos'] || '0', 10),
+              temErro: temErro
+            };
+          }).filter(m => m.musica);
+
+          preencherFiltros(repertorioOriginal);
+          filtrarData();
+        },
+        error: function() {
+          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="11" style="color:red; text-align:center;">Erro ao carregar planilha.</td></tr>';
+        }
+      });
+    }
+
+    function preencherFiltros(dados) {
+      const estilos = [...new Set(dados.map(d => d.estilo))].filter(Boolean).sort();
+      const bandas = [...new Set(dados.map(d => d.banda))].filter(Boolean).sort();
+      const tons = [...new Set(dados.map(d => d.tom))].filter(Boolean).sort();
+      preencherSelect('filtroEstilo', estilos);
+      preencherSelect('filtroBanda', bandas);
+      preencherSelect('filtroTom', tons);
+    }
+
+    function preencherSelect(id, lista) {
+      const select = document.getElementById(id);
+      select.innerHTML = select.children[0].outerHTML;
+      lista.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item; opt.textContent = item;
+        select.appendChild(opt);
+      });
+    }
+
+    function filtrarData() {
+      const busca = document.getElementById('buscaGeral').value.toLowerCase();
+      const num = document.getElementById('filtroNum').value.toLowerCase();
+      const estilo = document.getElementById('filtroEstilo').value;
+      const banda = document.getElementById('filtroBanda').value;
+      const musica = document.getElementById('filtroMusica').value.toLowerCase();
+      const tom = document.getElementById('filtroTom').value;
+      const meu = document.getElementById('filtroMeu').value;
+      const likesFilter = document.getElementById('filtroLikes').value;
+      const indicacaoFilter = document.getElementById('filtroIndicacao').value;
+      const erroFilter = document.getElementById('filtroErro').value;
+
+      dadosFiltrados = repertorioOriginal.filter(item => {
+        const isFav = favoritos.includes(item.id);
+        const hasLike = !!likesLocais[item.id];
+        const isIndicado = (indicacoesPorEvento[eventoAtualSessao] || []).includes(item.id);
+
+        const atendeGeral = !busca || String(item.num).toLowerCase().includes(busca) || item.estilo.toLowerCase().includes(busca) || item.banda.toLowerCase().includes(busca) || item.musica.toLowerCase().includes(busca) || item.tom.toLowerCase().includes(busca);
+        const atendeNum = !num || String(item.num).toLowerCase().includes(num);
+        const atendeEstilo = !estilo || item.estilo === estilo;
+        const atendeBanda = !banda || item.banda === banda;
+        const atendeMusica = !musica || item.musica.toLowerCase().includes(musica);
+        const atendeTom = !tom || item.tom === tom;
+        const atendeMeu = !meu || (meu === 'fav' && isFav);
+        const atendeLikes = !likesFilter || (likesFilter === 'liked' && hasLike);
+        const atendeIndicacao = !indicacaoFilter || (indicacaoFilter === 'indicado' && isIndicado);
+        const atendeErro = !erroFilter || (erroFilter === 'erro' && item.temErro);
+
+        return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom && atendeMeu && atendeLikes && atendeIndicacao && atendeErro;
+      });
+
+      paginaAtual = 1;
+      renderizarTabela();
+    }
+
+    function mudarPagina(delta) {
+      const maxPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina) || 1;
+      paginaAtual += delta;
+      if (paginaAtual < 1) paginaAtual = 1;
+      if (paginaAtual > maxPaginas) paginaAtual = maxPaginas;
+      renderizarTabela();
+      window.scrollTo(0, 0);
+    }
+
+    function renderizarTabela() {
+      const corpo = document.getElementById('corpoTabela');
+      corpo.innerHTML = '';
+      const pagContainer = document.getElementById('paginacaoContainer');
+
+      if (dadosFiltrados.length === 0) {
+        corpo.innerHTML = '<tr><td colspan="11" style="text-align:center;">Nenhuma música encontrada.</td></tr>';
+        pagContainer.style.display = 'none';
+        return;
+      }
+
+      const inicio = (paginaAtual - 1) * itensPorPagina;
+      const fim = inicio + itensPorPagina;
+      const dadosPagina = dadosFiltrados.slice(inicio, fim);
+
+      dadosPagina.forEach((item) => {
+        const isFav = favoritos.includes(item.id);
+        const hasLike = !!likesLocais[item.id];
+        const totalLikes = item.likes + (hasLike ? 1 : 0);
+        const isIndicado = (indicacoesPorEvento[eventoAtualSessao] || []).includes(item.id);
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.num}</td>
+          <td>${item.estilo}</td>
+          <td><b>${item.banda}</b></td>
+          <td>${item.musica}</td>
+          <td>${item.tom ? `<span class="tom-badge">${item.tom}</span>` : ''}</td>
+          <td>${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra" onclick="registrarAcesso('${item.id}')">📌 Cifra</a>` : '-'}</td>
+          <td><button class="btn-action" onclick="toggleFavorito('${item.id}')">${isFav ? '❤️' : '🤍'}</button></td>
+          <td><button class="btn-action pill-like ${hasLike ? 'active' : ''}" onclick="toggleLike('${item.id}')">👍 ${totalLikes}</button></td>
+          <td><span class="pill-acesso" id="acesso-${item.id}">${item.acessos}</span></td>
+          <td><button class="btn-action" onclick="toggleIndicacao('${item.id}')">${isIndicado ? '✅' : '➕'}</button></td>
+          <td><button class="btn-action" onclick="toggleErro('${item.id}')">${item.temErro ? '🔴' : '🟣'}</button></td>
+        `;
+        corpo.appendChild(tr);
+      });
+
+      const maxPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina);
+      document.getElementById('infoPagina').textContent = `Página ${paginaAtual} de ${maxPaginas}`;
+      pagContainer.style.display = maxPaginas > 1 ? 'flex' : 'none';
+    }
+
+    function registrarAcesso(id) {
+      const item = repertorioOriginal.find(m => m.id === id);
+      if (item) {
+        item.acessos += 1;
+        const elAcesso = document.getElementById(`acesso-${id}`);
+        if (elAcesso) elAcesso.textContent = item.acessos;
+      }
+      if (SCRIPT_API_URL) fetch(`${SCRIPT_API_URL}?id=${id}&action=acesso`, { mode: 'no-cors' });
+    }
+
+    function toggleFavorito(id) {
+      const idx = favoritos.indexOf(id);
+      if (idx > -1) favoritos.splice(idx, 1); else favoritos.push(id);
+      localStorage.setItem('rock_favs', JSON.stringify(favoritos));
+      filtrarData();
+    }
+
+    function toggleLike(id) {
+      if (likesLocais[id]) delete likesLocais[id]; else likesLocais[id] = true;
+      localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
+      filtrarData();
+    }
+
+    function toggleIndicacao(id) {
+      if (!eventoAtualSessao) {
+        mostrarToast('Selecione um evento primeiro recarregando a página!');
+        return;
+      }
+      if (!indicacoesPorEvento[eventoAtualSessao]) indicacoesPorEvento[eventoAtualSessao] = [];
+      const lista = indicacoesPorEvento[eventoAtualSessao];
+      const idx = lista.indexOf(id);
+      if (idx > -1) lista.splice(idx, 1); else lista.push(id);
+      
+      localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+      filtrarData();
+      if (SCRIPT_API_URL) fetch(`${SCRIPT_API_URL}?id=${id}&action=indicacao&evento=${encodeURIComponent(eventoAtualSessao)}&estado=${idx > -1 ? 'remover' : 'adicionar'}`, { mode: 'no-cors' });
+    }
+
+    function toggleErro(id) {
+      const item = repertorioOriginal.find(m => m.id === id);
+      if (item) {
+        item.temErro = !item.temErro;
+        filtrarData(); 
+        if (SCRIPT_API_URL) fetch(`${SCRIPT_API_URL}?id=${id}&action=erro&estado=${item.temErro}`, { mode: 'no-cors' });
+      }
+    }
+
+    function toggleDarkMode() { 
+      document.body.style.filter = document.body.style.filter ? '' : 'invert(0.9) hue-rotate(180deg)'; 
+    }
+    
+    function exportarCSV() {
+      let csv = 'Nº,Estilo,Banda,Musica,Tom,Cifra\n';
+      dadosFiltrados.forEach(r => { csv += `"${r.num}","${r.estilo}","${r.banda}","${r.musica}","${r.tom}","${r.cifra}"\n`; });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'repertorio_rockonha.csv';
+      a.click();
+      mostrarToast('Download iniciado!');
+    }
+    
+    function sair() { 
+      sessionStorage.removeItem('rock_evento_atual');
+      mostrarToast('Sessão encerrada!');
+      setTimeout(() => location.reload(), 1000);
+    }
+
+    inicializarEventos();
+    carregarPlanilha();
+  </script>
 </body>
+</html>
