@@ -43,6 +43,7 @@
     tbody td { padding: 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; white-space: nowrap; }
     tbody tr:hover { background-color: #f8f9fa; }
 
+    /* Badges e Botões de Ação */
     .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; font-size: 12px; }
     .btn-cifra {
       background-color: #dc3545; color: white; text-decoration: none; padding: 4px 10px;
@@ -131,13 +132,13 @@
 
   <script>
     const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
-    
-    // Insira aqui a URL gerada na Implantação do Apps Script
-    const SCRIPT_API_URL = ''; 
 
     let repertorioOriginal = [];
+
+    // Estado salvo localmente no navegador
     let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
     let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
+    let errosLocais = JSON.parse(localStorage.getItem('rock_erros') || '[]');
 
     function carregarPlanilha() {
       Papa.parse(PLANILHA_CSV_URL, {
@@ -145,23 +146,17 @@
         header: true,
         skipEmptyLines: true,
         complete: function(results) {
-          repertorioOriginal = results.data.map((item, index) => {
-            const erroValor = item['Erro'] || item['ERRO'] || '';
-            const temErroConsolidado = erroValor.includes('⚠️') || erroValor.toLowerCase().includes('sim') || erroValor === '1';
-
-            return {
-              id: String(item['Seq.'] || item['Seq'] || (index + 1)),
-              num: item['Seq.'] || item['Seq'] || (index + 1),
-              estilo: item['Stilo'] || item['Estilo'] || '',
-              banda: item['Banda'] || item['Artista'] || '',
-              musica: item['Música'] || item['Musica'] || '',
-              tom: item['Tom'] || '',
-              cifra: item['Links das Cifras'] || item['Cifra'] || '#',
-              likes: parseInt(item['Likes'] || '0', 10),
-              acessos: parseInt(item['Acessos'] || '0', 10),
-              temErro: temErroConsolidado
-            };
-          }).filter(m => m.musica);
+          repertorioOriginal = results.data.map((item, index) => ({
+            id: String(item['Seq.'] || item['Seq'] || (index + 1)),
+            num: item['Seq.'] || item['Seq'] || (index + 1),
+            estilo: item['Stilo'] || item['Estilo'] || '',
+            banda: item['Banda'] || item['Artista'] || '',
+            musica: item['Música'] || item['Musica'] || '',
+            tom: item['Tom'] || '',
+            cifra: item['Links das Cifras'] || item['Cifra'] || '#',
+            likes: parseInt(item['Likes'] || '0', 10),
+            acessos: item['Acessos'] || '0'
+          })).filter(m => m.musica);
 
           preencherFiltros(repertorioOriginal);
           renderizarTabela(repertorioOriginal);
@@ -206,6 +201,7 @@
         const isFav = favoritos.includes(item.id);
         const hasLike = !!likesLocais[item.id];
         const totalLikes = item.likes + (hasLike ? 1 : 0);
+        const hasErro = errosLocais.includes(item.id);
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -215,10 +211,10 @@
           <td>${item.musica}</td>
           <td>${item.tom ? `<span class="tom-badge">${item.tom}</span>` : ''}</td>
           <td>
-            ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra" onclick="registrarAcesso('${item.id}')">📌 Cifra</a>` : '-'}
+            ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra">📌 Cifra</a>` : '-'}
           </td>
           <td>
-            <button class="btn-action" onclick="toggleFavorito('${item.id}')" title="Favoritar (Meu)">
+            <button class="btn-action" onclick="toggleFavorito('${item.id}')" title="Favoritar">
               ${isFav ? '❤️' : '🤍'}
             </button>
           </td>
@@ -227,10 +223,10 @@
               👍 ${totalLikes}
             </button>
           </td>
-          <td><span class="pill-acesso" id="acesso-${item.id}">${item.acessos}</span></td>
+          <td><span class="pill-acesso">${item.acessos}</span></td>
           <td>
-            <button class="btn-action" onclick="reportarErro('${item.id}', '${item.musica.replace(/'/g, "\\'")}')" title="Reportar erro ao Administrador">
-              ${item.temErro ? '⚠️' : '🟣'}
+            <button class="btn-action" onclick="toggleErro('${item.id}')" title="Reportar Erro">
+              ${hasErro ? '⚠️' : '🟣'}
             </button>
           </td>
         `;
@@ -238,19 +234,7 @@
       });
     }
 
-    function registrarAcesso(id) {
-      const item = repertorioOriginal.find(m => m.id === id);
-      if (item) {
-        item.acessos += 1;
-        const elAcesso = document.getElementById(`acesso-${id}`);
-        if (elAcesso) elAcesso.textContent = item.acessos;
-      }
-
-      if (SCRIPT_API_URL) {
-        fetch(`${SCRIPT_API_URL}?id=${id}&action=acesso`, { mode: 'no-cors' });
-      }
-    }
-
+    // Funções de Ação
     function toggleFavorito(id) {
       const idx = favoritos.indexOf(id);
       if (idx > -1) favoritos.splice(idx, 1);
@@ -266,16 +250,12 @@
       filtrarData();
     }
 
-    function reportarErro(id, titulo) {
-      if (confirm(`Deseja notificar o Administrador sobre um erro na música "${titulo}"?`)) {
-        if (SCRIPT_API_URL) {
-          fetch(`${SCRIPT_API_URL}?id=${id}&action=erro`, { mode: 'no-cors' })
-            .then(() => alert('Erro reportado ao Administrador com sucesso!'))
-            .catch(() => alert('Falha ao enviar reporte.'));
-        } else {
-          alert('Erro sinalizado!');
-        }
-      }
+    function toggleErro(id) {
+      const idx = errosLocais.indexOf(id);
+      if (idx > -1) errosLocais.splice(idx, 1);
+      else errosLocais.push(id);
+      localStorage.setItem('rock_erros', JSON.stringify(errosLocais));
+      filtrarData();
     }
 
     function filtrarData() {
@@ -292,6 +272,7 @@
       const filtrados = repertorioOriginal.filter(item => {
         const isFav = favoritos.includes(item.id);
         const hasLike = !!likesLocais[item.id];
+        const hasErro = errosLocais.includes(item.id);
 
         const atendeGeral = !busca || 
           String(item.num).toLowerCase().includes(busca) ||
@@ -307,7 +288,7 @@
         const atendeTom = !tom || item.tom === tom;
         const atendeMeu = !meu || (meu === 'fav' && isFav);
         const atendeLikes = !likesFilter || (likesFilter === 'liked' && hasLike);
-        const atendeErro = !erroFilter || (erroFilter === 'erro' && item.temErro);
+        const atendeErro = !erroFilter || (erroFilter === 'erro' && hasErro);
 
         return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom && atendeMeu && atendeLikes && atendeErro;
       });
@@ -315,24 +296,22 @@
       renderizarTabela(filtrados);
     }
 
+    // Tela Cheia compatível com iFrames (Google Sites)
     function toggleTelaCheia() {
+      const isIframe = window.self !== window.top;
+      
+      if (isIframe) {
+        window.open(window.location.href, '_blank');
+        return;
+      }
+
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         const el = document.documentElement;
-        if (el.requestFullscreen) {
-          el.requestFullscreen();
-        } else if (el.webkitRequestFullscreen) {
-          el.webkitRequestFullscreen();
-        } else if (el.msRequestFullscreen) {
-          el.msRequestFullscreen();
-        }
+        if (el.requestFullscreen) el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
       } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) {
-          document.msExitFullscreen();
-        }
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
       }
     }
 
