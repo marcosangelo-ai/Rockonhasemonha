@@ -7,65 +7,64 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-    body { background-color: #f4f6f9; color: #333; padding: 10px; }
+    body { background-color: #f4f6f9; color: #333; padding: 12px; }
     
     header {
-      background-color: #212529; color: #fff; padding: 12px 20px;
+      background-color: #212529; color: #fff; padding: 10px 16px;
       display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-      border-radius: 6px; margin-bottom: 15px;
+      border-radius: 6px; margin-bottom: 12px;
     }
-    .user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 10px; }
-    .badge { background: #dc3545; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+    .user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .badge-admin { background: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    
     .actions { display: flex; gap: 8px; }
-    .btn { padding: 8px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; font-size: 13px; }
-    .btn-green { background-color: #198754; }
-    .btn-blue { background-color: #0dcaf0; color: #000; }
+    .btn { padding: 8px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }
     .btn-dark { background-color: #ffc107; color: #000; }
-    .btn-red { background-color: #dc3545; }
+    .btn-blue { background-color: #0dcaf0; color: #000; }
+    .btn-green { background-color: #198754; color: #fff; }
+    .btn-red { background-color: #dc3545; color: #fff; }
 
-    .search-bar { width: 100%; margin-bottom: 15px; }
+    .search-bar { width: 100%; margin-bottom: 12px; }
     .search-bar input {
-      width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ced4da; border-radius: 6px;
+      width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #ced4da; border-radius: 6px; background: white;
     }
 
-    .table-container { overflow-x: auto; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .table-container { overflow-x: auto; background: white; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
     
-    thead tr.header-titles { background-color: #212529; color: white; }
-    thead tr.header-titles th { padding: 10px 8px; font-size: 11px; text-transform: uppercase; font-weight: bold; white-space: nowrap; }
-    
-    thead tr.header-filters { background-color: #212529; }
-    thead tr.header-filters th { padding: 0 6px 8px 6px; }
+    thead { background-color: #212529; color: white; }
+    thead tr.titles th { padding: 10px 8px 4px 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
+    thead tr.filters th { padding: 4px 6px 10px 6px; }
 
     .filter-select, .filter-input {
-      width: 100%; padding: 5px; font-size: 12px; border: 1px solid #ced4da; border-radius: 4px; background: white; color: #333;
+      width: 100%; padding: 4px 6px; font-size: 12px; border: 1px solid #495057; border-radius: 4px; background: #fff; color: #212529;
     }
 
-    td { padding: 10px 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; }
-    tr:hover { background-color: #f8f9fa; }
+    tbody td { padding: 10px 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; white-space: nowrap; }
+    tbody tr:hover { background-color: #f8f9fa; }
 
-    /* Estilos das Badges da versão original */
-    .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; }
+    /* Elementos visuais das colunas */
+    .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; font-size: 12px; }
     .btn-cifra {
-      background-color: #dc3545; color: white; text-decoration: none; padding: 4px 8px;
+      background-color: #dc3545; color: white; text-decoration: none; padding: 4px 10px;
       border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;
     }
-    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: bold; display: inline-block; }
-    .pill-acesso { background-color: #0d6efd; color: white; border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: bold; display: inline-block; }
+    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; }
+    .pill-acesso { background-color: #0d6efd; color: white; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-block; }
     
-    .loading { text-align: center; padding: 20px; font-size: 16px; font-weight: bold; }
+    .loading { text-align: center; padding: 25px; font-size: 15px; font-weight: bold; color: #555; }
   </style>
 </head>
 <body>
 
   <header>
     <div class="user-info">
-      👤 marcos.angelo@ifal.edu.br <span class="badge">ADMINISTRADOR</span>
+      👤 marcos.angelo@ifal.edu.br <span class="badge-admin">ADMINISTRADOR</span>
     </div>
     <div class="actions">
       <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
       <button class="btn btn-blue" onclick="exportarCSV()">⬇️ Exportar CSV</button>
-      <button class="btn btn-green" onclick="toggleTelaCheia()">↗️ Tela Cheia</button>
+      <button class="btn btn-green" id="btnTelaCheia" onclick="toggleTelaCheia()">↗️ Tela Cheia</button>
       <button class="btn btn-red" onclick="sair()">Sair</button>
     </div>
   </header>
@@ -77,7 +76,7 @@
   <div class="table-container">
     <table id="tabelaRepertorio">
       <thead>
-        <tr class="header-titles">
+        <tr class="titles">
           <th>Nº</th>
           <th>ESTILO</th>
           <th>BANDA / ARTISTA</th>
@@ -89,7 +88,7 @@
           <th>ACESSOS</th>
           <th>⚠️ ERRO</th>
         </tr>
-        <tr class="header-filters">
+        <tr class="filters">
           <th><input type="text" id="filtroNum" class="filter-input" placeholder="Nº..." oninput="filtrarData()"></th>
           <th><select id="filtroEstilo" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
           <th><select id="filtroBanda" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
@@ -136,7 +135,7 @@
           renderizarTabela(repertorioOriginal);
         },
         error: function() {
-          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="10" style="color:red; text-align:center;">Erro ao carregar planilha. Verifique se o link está publicado público.</td></tr>';
+          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="10" style="color:red; text-align:center;">Erro ao carregar planilha. Verifique se o link está publicado publicamente.</td></tr>';
         }
       });
     }
@@ -178,7 +177,7 @@
           <td>${item.estilo}</td>
           <td><b>${item.banda}</b></td>
           <td>${item.musica}</td>
-          <td><span class="tom-badge">${item.tom}</span></td>
+          <td>${item.tom ? `<span class="tom-badge">${item.tom}</span>` : ''}</td>
           <td>
             ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra">📌 Cifra</a>` : '-'}
           </td>
@@ -219,16 +218,23 @@
       renderizarTabela(filtrados);
     }
 
-    // Alternar modo Tela Cheia real (Entrar e Sair)
+    // Função de Tela Cheia Real (Alterna para Entrar / Sair)
     function toggleTelaCheia() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-          alert("Não foi possível ativar a tela cheia: " + err.message);
-        });
+      const btn = document.getElementById('btnTelaCheia');
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+          document.documentElement.webkitRequestFullscreen();
+        }
+        btn.innerHTML = '↙️ Sair da Tela Cheia';
       } else {
         if (document.exitFullscreen) {
           document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
         }
+        btn.innerHTML = '↗️ Tela Cheia';
       }
     }
 
