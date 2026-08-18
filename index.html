@@ -1,30 +1,762 @@
-function alternarTelaCheia() {
-  const elem = document.documentElement; // Aplica na página inteira
-
-  if (!document.fullscreenElement && 
-      !document.mozFullScreenElement && 
-      !document.webkitFullscreenElement && 
-      !document.msFullscreenElement) {
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rockonhasemonha - Repertório</title>
+  <!-- Leitor de CSV para a Planilha do Google -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- Gerador de Planilhas Estruturadas em Excel (.XLSX) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background-color: #f4f6f9; color: #333; padding: 12px; overflow-x: hidden; }
     
-    // Entrar em tela cheia
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) { /* Safari / Chrome antigo */
-      elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) { /* IE / Edge antigo */
-      elem.msRequestFullscreen();
+    header {
+      background-color: #212529; color: #fff; padding: 10px 16px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+      border-radius: 6px; margin-bottom: 12px;
     }
-  } else {
-    // Sair da tela cheia
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
-    }
-  }
-}
+    .user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .badge-admin { background: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    .badge-membro { background: #0d6efd; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    .badge-visitante { background: #6c757d; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    .evento-ativo-badge { background: #198754; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; display: none; }
+    
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { padding: 8px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-dark { background-color: #ffc107; color: #000; }
+    .btn-blue { background-color: #0dcaf0; color: #000; }
+    .btn-green { background-color: #198754; color: #fff; }
+    .btn-red { background-color: #dc3545; color: #fff; }
+    .btn-purple { background-color: #6f42c1; color: #fff; }
 
-// Vincule diretamente ao botão de clique sem chamadas assíncronas intermediárias
-document.getElementById("btnTelaCheia").addEventListener("click", alternarTelaCheia);
+    .search-bar { width: 100%; margin-bottom: 12px; }
+    .search-bar input {
+      width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #ced4da; border-radius: 6px; background: white;
+    }
+
+    .table-container { 
+      width: 100%; max-width: 100vw; overflow-x: auto; 
+      -webkit-overflow-scrolling: touch; background: white; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); 
+    }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 1100px; }
+    thead { background-color: #212529; color: white; }
+    thead tr.titles th { padding: 10px 8px 4px 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
+    thead tr.filters th { padding: 4px 6px 10px 6px; }
+
+    .filter-select, .filter-input { width: 100%; padding: 4px 6px; font-size: 12px; border: 1px solid #495057; border-radius: 4px; background: #fff; color: #212529; }
+    tbody td { padding: 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; white-space: nowrap; }
+    tbody tr:hover { background-color: #f8f9fa; }
+
+    .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; font-size: 12px; }
+    .btn-cifra { background-color: #dc3545; color: white; text-decoration: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-action { background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 12px; transition: transform 0.1s; }
+    .btn-action:hover { transform: scale(1.2); }
+    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #ced4da; }
+    .pill-like.active { background-color: #ffc107; color: #000; border-color: #ffc107; }
+    .pill-acesso { background-color: #0d6efd; color: white; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-block; }
+    
+    .loading { text-align: center; padding: 25px; font-size: 15px; font-weight: bold; color: #555; }
+
+    .paginacao { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 15px; background: white; border-top: 1px solid #ddd; }
+    .paginacao span { font-weight: bold; font-size: 14px; }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; }
+    .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 420px; color: #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .modal-content h3 { margin-bottom: 12px; font-size: 18px; }
+    .modal-content input { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+    
+    .auth-tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 15px; }
+    .auth-tab { flex: 1; text-align: center; padding: 8px; cursor: pointer; font-weight: bold; color: #666; }
+    .auth-tab.active { color: #0d6efd; border-bottom: 2px solid #0d6efd; }
+
+    .lista-eventos-modal { max-height: 200px; overflow-y: auto; margin-bottom: 15px; padding: 0; list-style: none; border: 1px solid #eee; border-radius: 4px; }
+    .lista-eventos-modal li { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+    .lista-eventos-modal li:last-child { border-bottom: none; }
+    .btn-sm-action { background: transparent; border: none; cursor: pointer; font-size: 15px; margin-left: 6px; padding: 2px 4px; }
+
+    #toast { display: none; position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 6px; z-index: 10001; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="user-info" id="userInfoDisplay">
+      <!-- Preenchido via JavaScript -->
+    </div>
+    <div class="actions" id="headerActionsDisplay">
+      <!-- Preenchido via JavaScript -->
+    </div>
+  </header>
+
+  <div class="search-bar">
+    <input type="text" id="buscaGeral" placeholder="🔍 Busca Geral (Pesquise qualquer coisa aqui...)" oninput="filtrarData()">
+  </div>
+
+  <div class="table-container">
+    <table id="tabelaRepertorio">
+      <thead>
+        <tr class="titles">
+          <th>Nº</th>
+          <th>ESTILO</th>
+          <th>BANDA / ARTISTA</th>
+          <th>MÚSICA</th>
+          <th>TOM</th>
+          <th>CIFRA</th>
+          <th>❤️ MEU</th>
+          <th>👍 LIKES</th>
+          <th>ACESSOS</th>
+          <th>📌 INDICAÇÃO</th>
+          <th>⚠️ ERRO</th>
+        </tr>
+        <tr class="filters">
+          <th><input type="text" id="filtroNum" class="filter-input" placeholder="Nº..." oninput="filtrarData()"></th>
+          <th><select id="filtroEstilo" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroBanda" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
+          <th><input type="text" id="filtroMusica" class="filter-input" placeholder="Música..." oninput="filtrarData()"></th>
+          <th><select id="filtroTom" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroCifra" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroMeu" class="filter-select" onchange="filtrarData()"><option value="">Todas</option><option value="fav">Favoritas (❤️)</option></select></th>
+          <th><select id="filtroLikes" class="filter-select" onchange="filtrarData()"><option value="">Todos</option><option value="liked">Curtidas (👍)</option></select></th>
+          <th><select id="filtroAcessos" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroIndicacao" class="filter-select" onchange="filtrarData()"><option value="">Todas</option><option value="indicado">Indicadas (✅)</option></select></th>
+          <th><select id="filtroErro" class="filter-select" onchange="filtrarData()"><option value="">Todos</option><option value="erro">Com Erro (🔴)</option></select></th>
+        </tr>
+      </thead>
+      <tbody id="corpoTabela">
+        <tr><td colspan="11" class="loading">Carregando repertório da Planilha Google...</td></tr>
+      </tbody>
+    </table>
+
+    <div class="paginacao" id="paginacaoContainer" style="display:none;">
+      <button class="btn btn-blue" onclick="mudarPagina(-1)">◀ Anterior</button>
+      <span id="infoPagina">Página 1</span>
+      <button class="btn btn-blue" onclick="mudarPagina(1)">Próxima ▶</button>
+    </div>
+  </div>
+
+  <!-- Modal Unificada de Login e Cadastro -->
+  <div id="modalAuth" class="modal-overlay">
+    <div class="modal-content">
+      <div class="auth-tabs">
+        <div id="tabLogin" class="auth-tab active" onclick="alternarAbaAuth('login')">Login</div>
+        <div id="tabCadastro" class="auth-tab" onclick="alternarAbaAuth('cadastro')">Novo Cadastro</div>
+      </div>
+
+      <!-- Formulário de Login -->
+      <div id="formLogin">
+        <input type="email" id="loginEmailInput" placeholder="Seu E-mail...">
+        <input type="password" id="loginSenhaInput" placeholder="Sua Senha..." onkeyup="if(event.key==='Enter') executarLogin()">
+        <div class="modal-buttons">
+          <button class="btn btn-red" onclick="fecharModal('modalAuth')">Cancelar</button>
+          <button class="btn btn-green" onclick="executarLogin()">Entrar</button>
+        </div>
+      </div>
+
+      <!-- Formulário de Cadastro -->
+      <div id="formCadastro" style="display:none;">
+        <input type="text" id="cadNomeInput" placeholder="Seu Nome...">
+        <input type="email" id="cadEmailInput" placeholder="Seu E-mail...">
+        <input type="password" id="cadSenhaInput" placeholder="Crie uma Senha...">
+        <div class="modal-buttons">
+          <button class="btn btn-red" onclick="fecharModal('modalAuth')">Cancelar</button>
+          <button class="btn btn-purple" onclick="executarCadastro()">Cadastrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Seleção de Evento -->
+  <div id="modalEscolherEvento" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Selecione um Evento para Hoje</h3>
+      <p style="margin-bottom:12px; font-size:13px; color:#555;">Escolha para qual evento você deseja indicar músicas:</p>
+      <div id="listaEventosBotoes" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div class="modal-buttons">
+        <button class="btn btn-red" onclick="fecharModal('modalEscolherEvento')">Ignorar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal do Administrador para Cadastrar/Gerenciar Eventos -->
+  <div id="modalGerenciarEvento" class="modal-overlay">
+    <div class="modal-content">
+      <h3>📅 Gerenciar Eventos (Admin)</h3>
+      <p style="font-size:13px; margin-bottom:8px; font-weight:bold;">Novo Evento:</p>
+      <div style="display:flex; gap:6px; margin-bottom:15px;">
+        <input type="text" id="novoEventoInput" placeholder="Nome do evento..." style="margin-bottom:0;">
+        <button class="btn btn-green" onclick="salvarNovoEvento()">Cadastrar</button>
+      </div>
+
+      <p style="font-size:13px; margin-bottom:8px; font-weight:bold;">Eventos Cadastrados:</p>
+      <ul id="listaEventosAdmin" class="lista-eventos-modal"></ul>
+
+      <div class="modal-buttons">
+        <button class="btn btn-red" onclick="fecharModal('modalGerenciarEvento')">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast">Mensagem</div>
+
+  <script>
+    const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
+    const EMAIL_ADMINISTRADOR = 'marcos.angelo@ifal.edu.br';
+
+    let repertorioOriginal = [];
+    let dadosFiltrados = [];
+    
+    // Usuários e Sessão
+    let usuariosCadastrados = JSON.parse(localStorage.getItem('rock_users') || '[]');
+    let usuarioLogado = JSON.parse(sessionStorage.getItem('rock_logged_user') || 'null');
+
+    // Dados de Interação
+    let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
+    let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
+    let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
+    let indicacoesPorEvento = JSON.parse(localStorage.getItem('rock_indicacoes') || '{}');
+    let eventoAtualSessao = sessionStorage.getItem('rock_evento_atual') || '';
+
+    let paginaAtual = 1;
+    const itensPorPagina = 30;
+
+    function mostrarToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function abrirEmNovaAba() {
+      window.open(window.location.href, '_blank');
+    }
+
+    // --- GERENCIAMENTO DE CADASTRO / LOGIN ---
+    function alternarAbaAuth(aba) {
+      if (aba === 'login') {
+        document.getElementById('tabLogin').classList.add('active');
+        document.getElementById('tabCadastro').classList.remove('active');
+        document.getElementById('formLogin').style.display = 'block';
+        document.getElementById('formCadastro').style.display = 'none';
+      } else {
+        document.getElementById('tabCadastro').classList.add('active');
+        document.getElementById('tabLogin').classList.remove('active');
+        document.getElementById('formCadastro').style.display = 'block';
+        document.getElementById('formLogin').style.display = 'none';
+      }
+    }
+
+    function executarCadastro() {
+      const nome = document.getElementById('cadNomeInput').value.trim();
+      const email = document.getElementById('cadEmailInput').value.trim().toLowerCase();
+      const senha = document.getElementById('cadSenhaInput').value;
+
+      if (!nome || !email || !senha) {
+        mostrarToast('Preencha todos os campos para se cadastrar!');
+        return;
+      }
+
+      if (usuariosCadastrados.some(u => u.email === email)) {
+        mostrarToast('Este e-mail já está cadastrado! Faça login.');
+        alternarAbaAuth('login');
+        return;
+      }
+
+      const novoUsuario = { nome, email, senha };
+      usuariosCadastrados.push(novoUsuario);
+      localStorage.setItem('rock_users', JSON.stringify(usuariosCadastrados));
+
+      // Loga automaticamente após cadastrar
+      efetuarLoginSessao(novoUsuario);
+      fecharModal('modalAuth');
+      mostrarToast(`Conta criada com sucesso! Bem-vindo, ${nome}!`);
+    }
+
+    function executarLogin() {
+      const email = document.getElementById('loginEmailInput').value.trim().toLowerCase();
+      const senha = document.getElementById('loginSenhaInput').value;
+
+      if (!email || !senha) {
+        mostrarToast('Digite seu e-mail e senha!');
+        return;
+      }
+
+      const user = usuariosCadastrados.find(u => u.email === email && u.senha === senha);
+      if (user) {
+        efetuarLoginSessao(user);
+        fecharModal('modalAuth');
+        mostrarToast(`Login efetuado com sucesso!`);
+      } else {
+        mostrarToast('E-mail ou senha incorretos!');
+      }
+    }
+
+    function efetuarLoginSessao(user) {
+      const isAdmin = user.email === EMAIL_ADMINISTRADOR;
+      usuarioLogado = { ...user, isAdmin };
+      sessionStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
+      atualizarInterfaceUsuario();
+      filtrarData();
+    }
+
+    function efetuarLogout() {
+      usuarioLogado = null;
+      sessionStorage.removeItem('rock_logged_user');
+      atualizarInterfaceUsuario();
+      filtrarData();
+      mostrarToast('Você saiu da sua conta.');
+    }
+
+    function atualizarInterfaceUsuario() {
+      const infoContainer = document.getElementById('userInfoDisplay');
+      const actionsContainer = document.getElementById('headerActionsDisplay');
+
+      if (usuarioLogado) {
+        const badge = usuarioLogado.isAdmin 
+          ? '<span class="badge-admin">ADMINISTRADOR</span>' 
+          : '<span class="badge-membro">MEMBRO</span>';
+
+        infoContainer.innerHTML = `
+          👤 ${usuarioLogado.nome} (${usuarioLogado.email}) ${badge}
+          <span id="badgeEventoAtivo" class="evento-ativo-badge">📍 Evento: Nenhum</span>
+        `;
+
+        let botoesAdmin = usuarioLogado.isAdmin 
+          ? `<button class="btn btn-purple" onclick="abrirModalEventos()">📅 Eventos (Admin)</button>` 
+          : '';
+
+        actionsContainer.innerHTML = `
+          ${botoesAdmin}
+          <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
+          <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
+          <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
+          <button class="btn btn-red" onclick="efetuarLogout()">🚪 Sair</button>
+        `;
+      } else {
+        infoContainer.innerHTML = `
+          👤 Visitante <span class="badge-visitante">NÃO LOGADO</span>
+          <span id="badgeEventoAtivo" class="evento-ativo-badge">📍 Evento: Nenhum</span>
+        `;
+        actionsContainer.innerHTML = `
+          <button class="btn btn-purple" onclick="abrirModal('modalAuth')">🔑 Entrar / Cadastrar</button>
+          <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
+          <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
+          <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
+        `;
+      }
+      atualizarBadgeEvento();
+    }
+
+    // --- GERENCIAMENTO DE EVENTOS ---
+    function inicializarEventos() {
+      atualizarInterfaceUsuario();
+      if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
+        renderizarBotoesEscolhaEvento();
+        abrirModal('modalEscolherEvento');
+      }
+    }
+
+    function renderizarBotoesEscolhaEvento() {
+      const divBotoes = document.getElementById('listaEventosBotoes');
+      divBotoes.innerHTML = '';
+      if(eventosCadastrados.length === 0) {
+        divBotoes.innerHTML = '<p style="font-size:13px; color:#666;">Nenhum evento cadastrado no momento.</p>';
+        return;
+      }
+      eventosCadastrados.forEach(ev => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-purple';
+        btn.textContent = ev;
+        btn.onclick = () => selecionarEventoAtivo(ev);
+        divBotoes.appendChild(btn);
+      });
+    }
+
+    function selecionarEventoAtivo(ev) {
+      eventoAtualSessao = ev;
+      sessionStorage.setItem('rock_evento_atual', ev);
+      atualizarBadgeEvento();
+      fecharModal('modalEscolherEvento');
+      filtrarData();
+      mostrarToast('Evento selecionado: ' + ev);
+    }
+
+    function atualizarBadgeEvento() {
+      const badge = document.getElementById('badgeEventoAtivo');
+      if (badge) {
+        if (eventoAtualSessao) {
+          badge.style.display = 'inline-block';
+          badge.textContent = `📍 Evento: ${eventoAtualSessao}`;
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    }
+
+    function abrirModalEventos() {
+      if (!usuarioLogado || !usuarioLogado.isAdmin) {
+        mostrarToast('Apenas o Administrador pode acessar esta área.');
+        return;
+      }
+      renderizarListaEventosAdmin();
+      document.getElementById('novoEventoInput').value = '';
+      abrirModal('modalGerenciarEvento');
+    }
+
+    function renderizarListaEventosAdmin() {
+      const ul = document.getElementById('listaEventosAdmin');
+      ul.innerHTML = '';
+      if(eventosCadastrados.length === 0) {
+        ul.innerHTML = '<li style="font-size:13px; color:#666; justify-content:center;">Nenhum evento registrado.</li>';
+      } else {
+        eventosCadastrados.forEach((ev, idx) => {
+          let li = document.createElement('li');
+          const isAtivo = ev === eventoAtualSessao;
+          li.innerHTML = `
+            <span><b>${ev}</b> ${isAtivo ? '⭐ (Ativo)' : ''}</span>
+            <div>
+              <button class="btn-sm-action" onclick="selecionarEventoAtivo('${ev}')" title="Ativar este Evento">📌</button>
+              <button class="btn-sm-action" onclick="editarEvento(${idx})" title="Editar Nome">✏️</button>
+              <button class="btn-sm-action" onclick="excluirEvento(${idx})" title="Excluir Evento">🗑️</button>
+            </div>
+          `;
+          ul.appendChild(li);
+        });
+      }
+    }
+
+    function salvarNovoEvento() {
+      const input = document.getElementById('novoEventoInput');
+      const novo = input.value.trim();
+      if(novo) {
+        if(eventosCadastrados.includes(novo)) {
+          mostrarToast('Este evento já existe!');
+          return;
+        }
+        eventosCadastrados.push(novo);
+        localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        
+        eventoAtualSessao = novo;
+        sessionStorage.setItem('rock_evento_atual', novo);
+        
+        input.value = '';
+        atualizarBadgeEvento();
+        renderizarListaEventosAdmin();
+        renderizarBotoesEscolhaEvento();
+        filtrarData();
+        mostrarToast('Novo evento cadastrado e ativado!');
+      }
+    }
+
+    function editarEvento(index) {
+      const antigoNome = eventosCadastrados[index];
+      const novoNome = prompt('Digite o novo nome para o evento:', antigoNome);
+      
+      if (novoNome && novoNome.trim() !== '' && novoNome.trim() !== antigoNome) {
+        const nomeFormatado = novoNome.trim();
+        eventosCadastrados[index] = nomeFormatado;
+        
+        if (indicacoesPorEvento[antigoNome]) {
+          indicacoesPorEvento[nomeFormatado] = indicacoesPorEvento[antigoNome];
+          delete indicacoesPorEvento[antigoNome];
+          localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+        }
+        
+        if (eventoAtualSessao === antigoNome) {
+          eventoAtualSessao = nomeFormatado;
+          sessionStorage.setItem('rock_evento_atual', nomeFormatado);
+          atualizarBadgeEvento();
+        }
+        
+        localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        renderizarListaEventosAdmin();
+        renderizarBotoesEscolhaEvento();
+        filtrarData();
+        mostrarToast('Evento renomeado!');
+      }
+    }
+
+    function excluirEvento(index) {
+      const nomeEv = eventosCadastrados[index];
+      if (confirm(`Tem certeza que deseja excluir o evento "${nomeEv}"?`)) {
+        eventosCadastrados.splice(index, 1);
+        
+        if (indicacoesPorEvento[nomeEv]) {
+          delete indicacoesPorEvento[nomeEv];
+          localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+        }
+        
+        if (eventoAtualSessao === nomeEv) {
+          eventoAtualSessao = '';
+          sessionStorage.removeItem('rock_evento_atual');
+          atualizarBadgeEvento();
+        }
+        
+        localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        renderizarListaEventosAdmin();
+        renderizarBotoesEscolhaEvento();
+        filtrarData();
+        mostrarToast('Evento excluído!');
+      }
+    }
+
+    // --- CARREGAMENTO E FILTROS DO REPERTÓRIO ---
+    function carregarPlanilha() {
+      Papa.parse(PLANILHA_CSV_URL, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: function(results) {
+          repertorioOriginal = results.data.map((item, index) => {
+            const erroValor = item['Erro'] || item['ERRO'] || '';
+            const temErro = erroValor.includes('⚠️') || erroValor.includes('🔴') || erroValor.toLowerCase().includes('sim') || erroValor === '1';
+
+            return {
+              id: String(item['Seq.'] || item['Seq'] || (index + 1)),
+              num: item['Seq.'] || item['Seq'] || (index + 1),
+              estilo: item['Stilo'] || item['Estilo'] || '',
+              banda: item['Banda'] || item['Artista'] || '',
+              musica: item['Música'] || item['Musica'] || '',
+              tom: item['Tom'] || '',
+              cifra: item['Links das Cifras'] || item['Cifra'] || '#',
+              likes: parseInt(item['Likes'] || '0', 10),
+              acessos: parseInt(item['Acessos'] || '0', 10),
+              temErro: temErro
+            };
+          }).filter(m => m.musica);
+
+          preencherFiltros(repertorioOriginal);
+          filtrarData();
+        },
+        error: function() {
+          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="11" style="color:red; text-align:center;">Erro ao carregar planilha.</td></tr>';
+        }
+      });
+    }
+
+    function preencherFiltros(dados) {
+      const estilos = [...new Set(dados.map(d => d.estilo))].filter(Boolean).sort();
+      const bandas = [...new Set(dados.map(d => d.banda))].filter(Boolean).sort();
+      const tons = [...new Set(dados.map(d => d.tom))].filter(Boolean).sort();
+      preencherSelect('filtroEstilo', estilos);
+      preencherSelect('filtroBanda', bandas);
+      preencherSelect('filtroTom', tons);
+    }
+
+    function preencherSelect(id, lista) {
+      const select = document.getElementById(id);
+      select.innerHTML = select.children[0].outerHTML;
+      lista.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item; opt.textContent = item;
+        select.appendChild(opt);
+      });
+    }
+
+    function filtrarData() {
+      const busca = document.getElementById('buscaGeral').value.toLowerCase();
+      const num = document.getElementById('filtroNum').value.toLowerCase();
+      const estilo = document.getElementById('filtroEstilo').value;
+      const banda = document.getElementById('filtroBanda').value;
+      const musica = document.getElementById('filtroMusica').value.toLowerCase();
+      const tom = document.getElementById('filtroTom').value;
+      const meu = document.getElementById('filtroMeu').value;
+      const likesFilter = document.getElementById('filtroLikes').value;
+      const indicacaoFilter = document.getElementById('filtroIndicacao').value;
+      const erroFilter = document.getElementById('filtroErro').value;
+
+      dadosFiltrados = repertorioOriginal.filter(item => {
+        const isFav = favoritos.includes(item.id);
+        const hasLike = !!likesLocais[item.id];
+        const isIndicado = (indicacoesPorEvento[eventoAtualSessao] || []).includes(item.id);
+
+        const atendeGeral = !busca || String(item.num).toLowerCase().includes(busca) || item.estilo.toLowerCase().includes(busca) || item.banda.toLowerCase().includes(busca) || item.musica.toLowerCase().includes(busca) || item.tom.toLowerCase().includes(busca);
+        const atendeNum = !num || String(item.num).toLowerCase().includes(num);
+        const atendeEstilo = !estilo || item.estilo === estilo;
+        const atendeBanda = !banda || item.banda === banda;
+        const atendeMusica = !musica || item.musica.toLowerCase().includes(musica);
+        const atendeTom = !tom || item.tom === tom;
+        const atendeMeu = !meu || (meu === 'fav' && isFav);
+        const atendeLikes = !likesFilter || (likesFilter === 'liked' && hasLike);
+        const atendeIndicacao = !indicacaoFilter || (indicacaoFilter === 'indicado' && isIndicado);
+        const atendeErro = !erroFilter || (erroFilter === 'erro' && item.temErro);
+
+        return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom && atendeMeu && atendeLikes && atendeIndicacao && atendeErro;
+      });
+
+      paginaAtual = 1;
+      renderizarTabela();
+    }
+
+    function mudarPagina(delta) {
+      const maxPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina) || 1;
+      paginaAtual += delta;
+      if (paginaAtual < 1) paginaAtual = 1;
+      if (paginaAtual > maxPaginas) paginaAtual = maxPaginas;
+      renderizarTabela();
+      window.scrollTo(0, 0);
+    }
+
+    function renderizarTabela() {
+      const corpo = document.getElementById('corpoTabela');
+      corpo.innerHTML = '';
+      const pagContainer = document.getElementById('paginacaoContainer');
+
+      if (dadosFiltrados.length === 0) {
+        corpo.innerHTML = '<tr><td colspan="11" style="text-align:center;">Nenhuma música encontrada.</td></tr>';
+        pagContainer.style.display = 'none';
+        return;
+      }
+
+      const inicio = (paginaAtual - 1) * itensPorPagina;
+      const fim = inicio + itensPorPagina;
+      const dadosPagina = dadosFiltrados.slice(inicio, fim);
+
+      dadosPagina.forEach((item) => {
+        const isFav = favoritos.includes(item.id);
+        const hasLike = !!likesLocais[item.id];
+        const totalLikes = item.likes + (hasLike ? 1 : 0);
+        const isIndicado = (indicacoesPorEvento[eventoAtualSessao] || []).includes(item.id);
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.num}</td>
+          <td>${item.estilo}</td>
+          <td><b>${item.banda}</b></td>
+          <td>${item.musica}</td>
+          <td>${item.tom ? `<span class="tom-badge">${item.tom}</span>` : ''}</td>
+          <td>${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra" onclick="registrarAcesso('${item.id}')">📌 Cifra</a>` : '-'}</td>
+          <td><button class="btn-action" onclick="toggleFavorito('${item.id}')">${isFav ? '❤️' : '🤍'}</button></td>
+          <td><button class="btn-action pill-like ${hasLike ? 'active' : ''}" onclick="toggleLike('${item.id}')">👍 ${totalLikes}</button></td>
+          <td><span class="pill-acesso" id="acesso-${item.id}">${item.acessos}</span></td>
+          <td><button class="btn-action" onclick="toggleIndicacao('${item.id}')">${isIndicado ? '✅' : '➕'}</button></td>
+          <td><button class="btn-action" onclick="toggleErro('${item.id}')">${item.temErro ? '🔴' : '🟣'}</button></td>
+        `;
+        corpo.appendChild(tr);
+      });
+
+      const maxPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina);
+      document.getElementById('infoPagina').textContent = `Página ${paginaAtual} de ${maxPaginas}`;
+      pagContainer.style.display = maxPaginas > 1 ? 'flex' : 'none';
+    }
+
+    function registrarAcesso(id) {
+      const item = repertorioOriginal.find(m => m.id === id);
+      if (item) {
+        item.acessos += 1;
+        const elAcesso = document.getElementById(`acesso-${id}`);
+        if (elAcesso) elAcesso.textContent = item.acessos;
+      }
+    }
+
+    function checarAutenticacao() {
+      if (!usuarioLogado) {
+        mostrarToast('Faça login para interagir!');
+        abrirModal('modalAuth');
+        return false;
+      }
+      return true;
+    }
+
+    function toggleFavorito(id) {
+      if (!checarAutenticacao()) return;
+      const idx = favoritos.indexOf(id);
+      if (idx > -1) favoritos.splice(idx, 1); else favoritos.push(id);
+      localStorage.setItem('rock_favs', JSON.stringify(favoritos));
+      filtrarData();
+    }
+
+    function toggleLike(id) {
+      if (!checarAutenticacao()) return;
+      if (likesLocais[id]) delete likesLocais[id]; else likesLocais[id] = true;
+      localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
+      filtrarData();
+    }
+
+    function toggleIndicacao(id) {
+      if (!checarAutenticacao()) return;
+      if (!eventoAtualSessao) {
+        mostrarToast('Selecione um evento primeiro para poder indicar músicas!');
+        if(eventosCadastrados.length > 0) abrirModal('modalEscolherEvento');
+        return;
+      }
+      if (!indicacoesPorEvento[eventoAtualSessao]) indicacoesPorEvento[eventoAtualSessao] = [];
+      const lista = indicacoesPorEvento[eventoAtualSessao];
+      const idx = lista.indexOf(id);
+      if (idx > -1) lista.splice(idx, 1); else lista.push(id);
+      
+      localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+      filtrarData();
+    }
+
+    function toggleErro(id) {
+      if (!checarAutenticacao()) return;
+      const item = repertorioOriginal.find(m => m.id === id);
+      if (item) {
+        item.temErro = !item.temErro;
+        filtrarData(); 
+      }
+    }
+
+    function toggleDarkMode() { 
+      document.body.style.filter = document.body.style.filter ? '' : 'invert(0.9) hue-rotate(180deg)'; 
+    }
+    
+    function exportarPlanilha() {
+      if (!dadosFiltrados || dadosFiltrados.length === 0) {
+        mostrarToast('Nenhuma música encontrada para exportar!');
+        return;
+      }
+
+      const dadosExportacao = dadosFiltrados.map(r => {
+        const isFav = favoritos.includes(r.id);
+        const hasLike = !!likesLocais[r.id];
+        const isIndicado = (indicacoesPorEvento[eventoAtualSessao] || []).includes(r.id);
+
+        return {
+          'Nº': r.num,
+          'ESTILO': r.estilo,
+          'BANDA / ARTISTA': r.banda,
+          'MÚSICA': r.musica,
+          'TOM': r.tom || '-',
+          'CIFRA': r.cifra && r.cifra !== '#' ? r.cifra : '-',
+          'MEU (FAV)': isFav ? 'Sim' : 'Não',
+          'LIKES': r.likes + (hasLike ? 1 : 0),
+          'ACESSOS': r.acessos,
+          'INDICAÇÃO': isIndicado ? 'Sim' : 'Não',
+          'ERRO': r.temErro ? 'Sim' : 'Não'
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(dadosExportacao);
+
+      ws['!cols'] = [
+        { wch: 6 },  // Nº
+        { wch: 22 }, // ESTILO
+        { wch: 25 }, // BANDA / ARTISTA
+        { wch: 32 }, // MÚSICA
+        { wch: 8 },  // TOM
+        { wch: 45 }, // CIFRA
+        { wch: 12 }, // MEU (FAV)
+        { wch: 8 },  // LIKES
+        { wch: 10 }, // ACESSOS
+        { wch: 12 }, // INDICAÇÃO
+        { wch: 8 }   // ERRO
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Repertório");
+      XLSX.writeFile(wb, 'repertorio_rockonha.xlsx');
+
+      mostrarToast('Planilha Excel exportada com sucesso!');
+    }
+
+    // Inicialização
+    inicializarEventos();
+    carregarPlanilha();
+  </script>
+</body>
+</html>
