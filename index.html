@@ -14,15 +14,17 @@
       display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
       border-radius: 6px; margin-bottom: 12px;
     }
-    .user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .badge-admin { background: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    .evento-ativo-badge { background: #198754; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; display: none; }
     
-    .actions { display: flex; gap: 8px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn { padding: 8px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }
     .btn-dark { background-color: #ffc107; color: #000; }
     .btn-blue { background-color: #0dcaf0; color: #000; }
     .btn-green { background-color: #198754; color: #fff; }
     .btn-red { background-color: #dc3545; color: #fff; }
+    .btn-purple { background-color: #6f42c1; color: #fff; }
 
     .search-bar { width: 100%; margin-bottom: 12px; }
     .search-bar input {
@@ -67,8 +69,10 @@
   <header>
     <div class="user-info">
       👤 marcos.angelo@ifal.edu.br <span class="badge-admin">ADMINISTRADOR</span>
+      <span id="badgeEventoAtivo" class="evento-ativo-badge">📍 Evento: Nenhum</span>
     </div>
     <div class="actions">
+      <button class="btn btn-purple" onclick="gerenciarEventos()">📅 Eventos (Admin)</button>
       <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
       <button class="btn btn-blue" onclick="exportarCSV()">⬇️ Exportar CSV</button>
       <button class="btn btn-green" id="btnTelaCheia" onclick="toggleTelaCheia()">↗️ Tela Cheia</button>
@@ -93,6 +97,7 @@
           <th>❤️ MEU</th>
           <th>👍 LIKES</th>
           <th>ACESSOS</th>
+          <th>📌 INDICAÇÃO</th>
           <th>⚠️ ERRO</th>
         </tr>
         <tr class="filters">
@@ -116,28 +121,65 @@
           </th>
           <th><select id="filtroAcessos" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
           <th>
+            <select id="filtroIndicacao" class="filter-select" onchange="filtrarData()">
+              <option value="">Todas</option>
+              <option value="indicado">Indicadas (✅)</option>
+            </select>
+          </th>
+          <th>
             <select id="filtroErro" class="filter-select" onchange="filtrarData()">
               <option value="">Todos</option>
-              <option value="erro">Com Erro (⚠️)</option>
+              <option value="erro">Com Erro (🔴)</option>
             </select>
           </th>
         </tr>
       </thead>
       <tbody id="corpoTabela">
-        <tr><td colspan="10" class="loading">Carregando repertório da Planilha Google...</td></tr>
+        <tr><td colspan="11" class="loading">Carregando repertório da Planilha Google...</td></tr>
       </tbody>
     </table>
   </div>
 
   <script>
     const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
-    
-    // Insira aqui a URL gerada na Implantação do Apps Script
-    const SCRIPT_API_URL = ''; 
+    const SCRIPT_API_URL = ''; // Insira aqui a URL gerada na Implantação do Apps Script
 
     let repertorioOriginal = [];
     let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
     let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
+    
+    // Variáveis para Eventos e Indicações
+    let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
+    let indicacoesPorEvento = JSON.parse(localStorage.getItem('rock_indicacoes') || '{}');
+    let eventoAtualSessao = sessionStorage.getItem('rock_evento_atual') || '';
+
+    function inicializarEventos() {
+      if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
+        let lista = eventosCadastrados.map((e, i) => `${i + 1} - ${e}`).join('\n');
+        let escolha = prompt(`Para qual evento você deseja indicar músicas hoje?\nDigite o número correspondente:\n\n${lista}`);
+        
+        if (escolha && !isNaN(escolha) && eventosCadastrados[escolha - 1]) {
+          eventoAtualSessao = eventosCadastrados[escolha - 1];
+          sessionStorage.setItem('rock_evento_atual', eventoAtualSessao);
+        }
+      }
+
+      if (eventoAtualSessao) {
+        const badge = document.getElementById('badgeEventoAtivo');
+        badge.style.display = 'inline-block';
+        badge.textContent = `📍 Evento: ${eventoAtualSessao}`;
+      }
+    }
+
+    function gerenciarEventos() {
+      let acao = prompt(`Eventos atuais:\n${eventosCadastrados.join(', ') || 'Nenhum'}\n\nDigite o nome de um novo evento para cadastrar ou deixe em branco para cancelar:`);
+      if (acao && acao.trim() !== '') {
+        eventosCadastrados.push(acao.trim());
+        localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        alert('Evento cadastrado com sucesso!');
+        location.reload(); // Recarrega para aplicar a seleção
+      }
+    }
 
     function carregarPlanilha() {
       Papa.parse(PLANILHA_CSV_URL, {
@@ -147,7 +189,7 @@
         complete: function(results) {
           repertorioOriginal = results.data.map((item, index) => {
             const erroValor = item['Erro'] || item['ERRO'] || '';
-            const temErroConsolidado = erroValor.includes('⚠️') || erroValor.toLowerCase().includes('sim') || erroValor === '1';
+            const temErroConsolidado = erroValor.includes('⚠️') || erroValor.includes('🔴') || erroValor.toLowerCase().includes('sim') || erroValor === '1';
 
             return {
               id: String(item['Seq.'] || item['Seq'] || (index + 1)),
@@ -167,7 +209,7 @@
           renderizarTabela(repertorioOriginal);
         },
         error: function() {
-          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="10" style="color:red; text-align:center;">Erro ao carregar planilha.</td></tr>';
+          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="11" style="color:red; text-align:center;">Erro ao carregar planilha.</td></tr>';
         }
       });
     }
@@ -198,7 +240,7 @@
       corpo.innerHTML = '';
 
       if (dados.length === 0) {
-        corpo.innerHTML = '<tr><td colspan="10" style="text-align:center;">Nenhuma música encontrada.</td></tr>';
+        corpo.innerHTML = '<tr><td colspan="11" style="text-align:center;">Nenhuma música encontrada.</td></tr>';
         return;
       }
 
@@ -206,6 +248,10 @@
         const isFav = favoritos.includes(item.id);
         const hasLike = !!likesLocais[item.id];
         const totalLikes = item.likes + (hasLike ? 1 : 0);
+        
+        // Verifica se a música está indicada para o evento atual
+        const listaIndicacoes = indicacoesPorEvento[eventoAtualSessao] || [];
+        const isIndicado = listaIndicacoes.includes(item.id);
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -229,8 +275,13 @@
           </td>
           <td><span class="pill-acesso" id="acesso-${item.id}">${item.acessos}</span></td>
           <td>
-            <button class="btn-action" onclick="reportarErro('${item.id}', '${item.musica.replace(/'/g, "\\'")}')" title="Reportar erro ao Administrador">
-              ${item.temErro ? '⚠️' : '🟣'}
+            <button class="btn-action" onclick="toggleIndicacao('${item.id}')" title="Indicar para Evento">
+              ${isIndicado ? '✅' : '➕'}
+            </button>
+          </td>
+          <td>
+            <button class="btn-action" onclick="toggleErro('${item.id}')" title="Sinalizar/Remover Erro">
+              ${item.temErro ? '🔴' : '🟣'}
             </button>
           </td>
         `;
@@ -245,7 +296,6 @@
         const elAcesso = document.getElementById(`acesso-${id}`);
         if (elAcesso) elAcesso.textContent = item.acessos;
       }
-
       if (SCRIPT_API_URL) {
         fetch(`${SCRIPT_API_URL}?id=${id}&action=acesso`, { mode: 'no-cors' });
       }
@@ -266,14 +316,40 @@
       filtrarData();
     }
 
-    function reportarErro(id, titulo) {
-      if (confirm(`Deseja notificar o Administrador sobre um erro na música "${titulo}"?`)) {
+    function toggleIndicacao(id) {
+      if (!eventoAtualSessao) {
+        alert('Você precisa selecionar ou ter um evento ativo para indicar uma música!');
+        return;
+      }
+      if (!indicacoesPorEvento[eventoAtualSessao]) {
+        indicacoesPorEvento[eventoAtualSessao] = [];
+      }
+      
+      const lista = indicacoesPorEvento[eventoAtualSessao];
+      const idx = lista.indexOf(id);
+      
+      if (idx > -1) lista.splice(idx, 1); // Desmarca
+      else lista.push(id); // Marca
+      
+      localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+      filtrarData(); // Atualiza a tela
+
+      // Envia para o Apps Script (Se desejar consolidar na planilha)
+      if (SCRIPT_API_URL) {
+        fetch(`${SCRIPT_API_URL}?id=${id}&action=indicacao&evento=${encodeURIComponent(eventoAtualSessao)}&estado=${idx > -1 ? 'remover' : 'adicionar'}`, { mode: 'no-cors' });
+      }
+    }
+
+    function toggleErro(id) {
+      const item = repertorioOriginal.find(m => m.id === id);
+      if (item) {
+        // Inverte o estado local imediatamente
+        item.temErro = !item.temErro;
+        filtrarData(); // Atualiza a tabela na mesma hora (bolinha vermelha)
+
+        // Envia direto para a planilha (sem o pop-up)
         if (SCRIPT_API_URL) {
-          fetch(`${SCRIPT_API_URL}?id=${id}&action=erro`, { mode: 'no-cors' })
-            .then(() => alert('Erro reportado ao Administrador com sucesso!'))
-            .catch(() => alert('Falha ao enviar reporte.'));
-        } else {
-          alert('Erro sinalizado!');
+          fetch(`${SCRIPT_API_URL}?id=${id}&action=erro&estado=${item.temErro}`, { mode: 'no-cors' });
         }
       }
     }
@@ -287,11 +363,13 @@
       const tom = document.getElementById('filtroTom').value;
       const meu = document.getElementById('filtroMeu').value;
       const likesFilter = document.getElementById('filtroLikes').value;
+      const indicacaoFilter = document.getElementById('filtroIndicacao').value;
       const erroFilter = document.getElementById('filtroErro').value;
 
       const filtrados = repertorioOriginal.filter(item => {
         const isFav = favoritos.includes(item.id);
         const hasLike = !!likesLocais[item.id];
+        const isIndicado = (indicacoesPorEvento[eventoAtualSessao] || []).includes(item.id);
 
         const atendeGeral = !busca || 
           String(item.num).toLowerCase().includes(busca) ||
@@ -307,9 +385,10 @@
         const atendeTom = !tom || item.tom === tom;
         const atendeMeu = !meu || (meu === 'fav' && isFav);
         const atendeLikes = !likesFilter || (likesFilter === 'liked' && hasLike);
+        const atendeIndicacao = !indicacaoFilter || (indicacaoFilter === 'indicado' && isIndicado);
         const atendeErro = !erroFilter || (erroFilter === 'erro' && item.temErro);
 
-        return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom && atendeMeu && atendeLikes && atendeErro;
+        return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom && atendeMeu && atendeLikes && atendeIndicacao && atendeErro;
       });
 
       renderizarTabela(filtrados);
@@ -337,6 +416,7 @@
     }
 
     function toggleDarkMode() { document.body.style.filter = document.body.style.filter ? '' : 'invert(0.9) hue-rotate(180deg)'; }
+    
     function exportarCSV() {
       let csv = 'Nº,Estilo,Banda,Musica,Tom,Cifra\n';
       repertorioOriginal.forEach(r => { csv += `"${r.num}","${r.estilo}","${r.banda}","${r.musica}","${r.tom}","${r.cifra}"\n`; });
@@ -347,8 +427,14 @@
       a.download = 'repertorio_rockonha.csv';
       a.click();
     }
-    function sair() { alert('Sessão encerrada.'); }
+    
+    function sair() { 
+      sessionStorage.removeItem('rock_evento_atual');
+      alert('Sessão encerrada.'); 
+      location.reload();
+    }
 
+    inicializarEventos();
     carregarPlanilha();
   </script>
 </body>
