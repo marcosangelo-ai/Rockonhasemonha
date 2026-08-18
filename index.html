@@ -84,8 +84,12 @@
 <body>
 
   <header>
-    <div class="user-info" id="userInfoDisplay"></div>
-    <div class="actions" id="headerActionsDisplay"></div>
+    <div class="user-info" id="userInfoDisplay">
+      <!-- Preenchido via JavaScript -->
+    </div>
+    <div class="actions" id="headerActionsDisplay">
+      <!-- Preenchido via JavaScript -->
+    </div>
   </header>
 
   <div class="search-bar">
@@ -207,11 +211,11 @@
     
     let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
     let indicacoesPorEvento = JSON.parse(localStorage.getItem('rock_indicacoes') || '{}');
-    let eventoAtualSessao = localStorage.getItem('rock_evento_atual') || '';
+    let eventoAtualSessao = sessionStorage.getItem('rock_evento_atual') || '';
 
-    // Usuários e Autenticação (localStorage mantêm a sessão ao abrir em novas abas)
+    // Usuários e Autenticação
     let usuariosCadastrados = JSON.parse(localStorage.getItem('rock_users') || '[]');
-    let usuarioLogado = JSON.parse(localStorage.getItem('rock_logged_user') || 'null');
+    let usuarioLogado = JSON.parse(sessionStorage.getItem('rock_logged_user') || 'null');
 
     let paginaAtual = 1;
     const itensPorPagina = 30;
@@ -225,18 +229,6 @@
 
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    function alternarTelaCheia() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {
-          mostrarToast('Navegador bloqueou a tela cheia.');
-        });
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-      }
-    }
 
     function abrirEmNovaAba() {
       window.open(window.location.href, '_blank');
@@ -304,7 +296,7 @@
     function efetuarLoginSessao(user) {
       const isAdmin = user.email === EMAIL_ADMINISTRADOR;
       usuarioLogado = { ...user, isAdmin };
-      localStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
+      sessionStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
       atualizarInterfaceUsuario();
       
       if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
@@ -312,17 +304,13 @@
         abrirModal('modalEscolherEvento');
       }
       
-      if (repertorioOriginal.length === 0) {
-        carregarPlanilha();
-      } else {
-        filtrarData();
-      }
+      filtrarData();
     }
 
     function efetuarLogout() {
       usuarioLogado = null;
-      localStorage.removeItem('rock_logged_user');
-      localStorage.removeItem('rock_evento_atual');
+      sessionStorage.removeItem('rock_logged_user');
+      sessionStorage.removeItem('rock_evento_atual');
       eventoAtualSessao = '';
       atualizarInterfaceUsuario();
       mostrarToast('Você saiu da sua conta.');
@@ -339,14 +327,12 @@
         return;
       }
 
-      fecharModal('modalAuth');
-
       const badge = usuarioLogado.isAdmin 
         ? '<span class="badge-admin">ADMINISTRADOR</span>' 
         : '<span class="badge-membro">MEMBRO</span>';
 
       infoContainer.innerHTML = `
-        👤 ${usuarioLogado.nome || usuarioLogado.email} (${usuarioLogado.email}) ${badge}
+        👤 ${usuarioLogado.nome} (${usuarioLogado.email}) ${badge}
         <span id="badgeEventoAtivo" class="evento-ativo-badge">📍 Evento: Nenhum</span>
       `;
 
@@ -358,8 +344,7 @@
         ${botoesAdmin}
         <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
         <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
-        <button class="btn btn-green" onclick="alternarTelaCheia()">⛶ Tela Cheia</button>
-        <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Nova Aba</button>
+        <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
         <button class="btn btn-red" onclick="efetuarLogout()">🚪 Sair</button>
       `;
       
@@ -394,7 +379,7 @@
 
     function selecionarEventoAtivo(ev) {
       eventoAtualSessao = ev;
-      localStorage.setItem('rock_evento_atual', ev);
+      sessionStorage.setItem('rock_evento_atual', ev);
       atualizarBadgeEvento();
       fecharModal('modalEscolherEvento');
       filtrarData();
@@ -453,7 +438,7 @@
         localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
         
         eventoAtualSessao = novo;
-        localStorage.setItem('rock_evento_atual', novo);
+        sessionStorage.setItem('rock_evento_atual', novo);
         
         input.value = '';
         atualizarBadgeEvento();
@@ -480,7 +465,7 @@
         
         if (eventoAtualSessao === antigoNome) {
           eventoAtualSessao = nomeFormatado;
-          localStorage.setItem('rock_evento_atual', nomeFormatado);
+          sessionStorage.setItem('rock_evento_atual', nomeFormatado);
           atualizarBadgeEvento();
         }
         
@@ -504,7 +489,7 @@
         
         if (eventoAtualSessao === nomeEv) {
           eventoAtualSessao = '';
-          localStorage.removeItem('rock_evento_atual');
+          sessionStorage.removeItem('rock_evento_atual');
           atualizarBadgeEvento();
         }
         
@@ -732,17 +717,17 @@
       const ws = XLSX.utils.json_to_sheet(dadosExportacao);
 
       ws['!cols'] = [
-        { wch: 6 },
-        { wch: 22 },
-        { wch: 25 },
-        { wch: 32 },
-        { wch: 8 },
-        { wch: 45 },
-        { wch: 12 },
-        { wch: 8 },
-        { wch: 10 },
-        { wch: 12 },
-        { wch: 8 }
+        { wch: 6 },  // Nº
+        { wch: 22 }, // ESTILO
+        { wch: 25 }, // BANDA / ARTISTA
+        { wch: 32 }, // MÚSICA
+        { wch: 8 },  // TOM
+        { wch: 45 }, // CIFRA
+        { wch: 12 }, // MEU (FAV)
+        { wch: 8 },  // LIKES
+        { wch: 10 }, // ACESSOS
+        { wch: 12 }, // INDICAÇÃO
+        { wch: 8 }   // ERRO
       ];
 
       const wb = XLSX.utils.book_new();
@@ -752,12 +737,12 @@
       mostrarToast('Planilha Excel exportada com sucesso!');
     }
 
-    // Inicialização da Página
+    // Inicialização do sistema
     atualizarInterfaceUsuario();
     if (usuarioLogado) {
-      carregarPlanilha();
       inicializarEventos();
     }
+    carregarPlanilha();
   </script>
 </body>
 </html>
