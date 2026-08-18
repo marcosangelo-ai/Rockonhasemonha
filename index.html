@@ -19,6 +19,7 @@
     }
     .user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .badge-admin { background: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    .badge-membro { background: #0d6efd; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
     .evento-ativo-badge { background: #198754; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; display: none; }
     
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -66,6 +67,11 @@
     .modal-content input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
     .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
     
+    /* Abas de Autenticação */
+    .auth-tabs { display: flex; border-bottom: 2px solid #dee2e6; margin-bottom: 15px; }
+    .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-weight: bold; color: #6c757d; }
+    .auth-tab.active { color: #0d6efd; border-bottom: 2px solid #0d6efd; margin-bottom: -2px; }
+
     .lista-eventos-modal { max-height: 200px; overflow-y: auto; margin-bottom: 15px; padding: 0; list-style: none; border: 1px solid #eee; border-radius: 4px; }
     .lista-eventos-modal li { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 14px; }
     .lista-eventos-modal li:last-child { border-bottom: none; }
@@ -78,16 +84,11 @@
 <body>
 
   <header>
-    <div class="user-info">
-      👤 marcos.angelo@ifal.edu.br <span class="badge-admin">ADMINISTRADOR</span>
-      <span id="badgeEventoAtivo" class="evento-ativo-badge">📍 Evento: Nenhum</span>
+    <div class="user-info" id="userInfoDisplay">
+      <!-- Preenchido via JavaScript -->
     </div>
-    <div class="actions">
-      <button class="btn btn-purple" onclick="abrirModalEventos()">📅 Eventos (Admin)</button>
-      <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
-      <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
-      <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
-      <button class="btn btn-red" onclick="sair()">Sair</button>
+    <div class="actions" id="headerActionsDisplay">
+      <!-- Preenchido via JavaScript -->
     </div>
   </header>
 
@@ -137,6 +138,35 @@
     </div>
   </div>
 
+  <!-- Modal Unificado de Login e Cadastro (Obrigatório) -->
+  <div id="modalAuth" class="modal-overlay" style="display: flex;">
+    <div class="modal-content">
+      <div class="auth-tabs">
+        <div id="tabLogin" class="auth-tab active" onclick="alternarAbaAuth('login')">Login</div>
+        <div id="tabCadastro" class="auth-tab" onclick="alternarAbaAuth('cadastro')">Novo Cadastro</div>
+      </div>
+
+      <!-- Formulário de Login -->
+      <div id="formLogin">
+        <input type="email" id="loginEmailInput" placeholder="Seu E-mail...">
+        <input type="password" id="loginSenhaInput" placeholder="Sua Senha..." onkeyup="if(event.key==='Enter') executarLogin()">
+        <div class="modal-buttons">
+          <button class="btn btn-green" style="width: 100%;" onclick="executarLogin()">Entrar</button>
+        </div>
+      </div>
+
+      <!-- Formulário de Cadastro -->
+      <div id="formCadastro" style="display:none;">
+        <input type="text" id="cadNomeInput" placeholder="Seu Nome...">
+        <input type="email" id="cadEmailInput" placeholder="Seu E-mail...">
+        <input type="password" id="cadSenhaInput" placeholder="Crie uma Senha...">
+        <div class="modal-buttons">
+          <button class="btn btn-purple" style="width: 100%;" onclick="executarCadastro()">Cadastrar e Entrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal de Seleção de Evento -->
   <div id="modalEscolherEvento" class="modal-overlay">
     <div class="modal-content">
@@ -172,6 +202,7 @@
 
   <script>
     const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
+    const EMAIL_ADMINISTRADOR = 'marcos.angelo@ifal.edu.br';
 
     let repertorioOriginal = [];
     let dadosFiltrados = [];
@@ -181,6 +212,10 @@
     let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
     let indicacoesPorEvento = JSON.parse(localStorage.getItem('rock_indicacoes') || '{}');
     let eventoAtualSessao = sessionStorage.getItem('rock_evento_atual') || '';
+
+    // Usuários e Autenticação
+    let usuariosCadastrados = JSON.parse(localStorage.getItem('rock_users') || '[]');
+    let usuarioLogado = JSON.parse(sessionStorage.getItem('rock_logged_user') || 'null');
 
     let paginaAtual = 1;
     const itensPorPagina = 30;
@@ -199,8 +234,126 @@
       window.open(window.location.href, '_blank');
     }
 
-    function inicializarEventos() {
+    // --- GERENCIAMENTO DE CADASTRO / LOGIN ---
+    function alternarAbaAuth(aba) {
+      if (aba === 'login') {
+        document.getElementById('tabLogin').classList.add('active');
+        document.getElementById('tabCadastro').classList.remove('active');
+        document.getElementById('formLogin').style.display = 'block';
+        document.getElementById('formCadastro').style.display = 'none';
+      } else {
+        document.getElementById('tabCadastro').classList.add('active');
+        document.getElementById('tabLogin').classList.remove('active');
+        document.getElementById('formCadastro').style.display = 'block';
+        document.getElementById('formLogin').style.display = 'none';
+      }
+    }
+
+    function executarCadastro() {
+      const nome = document.getElementById('cadNomeInput').value.trim();
+      const email = document.getElementById('cadEmailInput').value.trim().toLowerCase();
+      const senha = document.getElementById('cadSenhaInput').value;
+
+      if (!nome || !email || !senha) {
+        mostrarToast('Preencha todos os campos para se cadastrar!');
+        return;
+      }
+
+      if (usuariosCadastrados.some(u => u.email === email)) {
+        mostrarToast('Este e-mail já está cadastrado! Faça login.');
+        alternarAbaAuth('login');
+        return;
+      }
+
+      const novoUsuario = { nome, email, senha };
+      usuariosCadastrados.push(novoUsuario);
+      localStorage.setItem('rock_users', JSON.stringify(usuariosCadastrados));
+
+      efetuarLoginSessao(novoUsuario);
+      fecharModal('modalAuth');
+      mostrarToast(`Conta criada com sucesso! Bem-vindo, ${nome}!`);
+    }
+
+    function executarLogin() {
+      const email = document.getElementById('loginEmailInput').value.trim().toLowerCase();
+      const senha = document.getElementById('loginSenhaInput').value;
+
+      if (!email || !senha) {
+        mostrarToast('Digite seu e-mail e senha!');
+        return;
+      }
+
+      const user = usuariosCadastrados.find(u => u.email === email && u.senha === senha);
+      if (user) {
+        efetuarLoginSessao(user);
+        fecharModal('modalAuth');
+        mostrarToast(`Login efetuado com sucesso!`);
+      } else {
+        mostrarToast('E-mail ou senha incorretos!');
+      }
+    }
+
+    function efetuarLoginSessao(user) {
+      const isAdmin = user.email === EMAIL_ADMINISTRADOR;
+      usuarioLogado = { ...user, isAdmin };
+      sessionStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
+      atualizarInterfaceUsuario();
+      
       if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
+        renderizarBotoesEscolhaEvento();
+        abrirModal('modalEscolherEvento');
+      }
+      
+      filtrarData();
+    }
+
+    function efetuarLogout() {
+      usuarioLogado = null;
+      sessionStorage.removeItem('rock_logged_user');
+      sessionStorage.removeItem('rock_evento_atual');
+      eventoAtualSessao = '';
+      atualizarInterfaceUsuario();
+      mostrarToast('Você saiu da sua conta.');
+    }
+
+    function atualizarInterfaceUsuario() {
+      const infoContainer = document.getElementById('userInfoDisplay');
+      const actionsContainer = document.getElementById('headerActionsDisplay');
+
+      if (!usuarioLogado) {
+        infoContainer.innerHTML = `👤 Autenticação requerida`;
+        actionsContainer.innerHTML = '';
+        abrirModal('modalAuth');
+        return;
+      }
+
+      const badge = usuarioLogado.isAdmin 
+        ? '<span class="badge-admin">ADMINISTRADOR</span>' 
+        : '<span class="badge-membro">MEMBRO</span>';
+
+      infoContainer.innerHTML = `
+        👤 ${usuarioLogado.nome} (${usuarioLogado.email}) ${badge}
+        <span id="badgeEventoAtivo" class="evento-ativo-badge">📍 Evento: Nenhum</span>
+      `;
+
+      let botoesAdmin = usuarioLogado.isAdmin 
+        ? `<button class="btn btn-purple" onclick="abrirModalEventos()">📅 Eventos (Admin)</button>` 
+        : '';
+
+      actionsContainer.innerHTML = `
+        ${botoesAdmin}
+        <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
+        <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
+        <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
+        <button class="btn btn-red" onclick="efetuarLogout()">🚪 Sair</button>
+      `;
+      
+      atualizarBadgeEvento();
+    }
+
+    // --- GERENCIAMENTO DE EVENTOS ---
+    function inicializarEventos() {
+      if (eventosCadastrados.length > 0 && !eventoAtualSessao && usuarioLogado) {
         renderizarBotoesEscolhaEvento();
         abrirModal('modalEscolherEvento');
       } else if (eventoAtualSessao) {
@@ -235,11 +388,13 @@
 
     function atualizarBadgeEvento() {
       const badge = document.getElementById('badgeEventoAtivo');
-      if (eventoAtualSessao) {
-        badge.style.display = 'inline-block';
-        badge.textContent = `📍 Evento: ${eventoAtualSessao}`;
-      } else {
-        badge.style.display = 'none';
+      if (badge) {
+        if (eventoAtualSessao) {
+          badge.style.display = 'inline-block';
+          badge.textContent = `📍 Evento: ${eventoAtualSessao}`;
+        } else {
+          badge.style.display = 'none';
+        }
       }
     }
 
@@ -282,7 +437,6 @@
         eventosCadastrados.push(novo);
         localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
         
-        // Ativa automaticamente o novo evento cadastrado
         eventoAtualSessao = novo;
         sessionStorage.setItem('rock_evento_atual', novo);
         
@@ -347,6 +501,7 @@
       }
     }
 
+    // --- CARREGAMENTO E EXIBIÇÃO DE DADOS ---
     function carregarPlanilha() {
       Papa.parse(PLANILHA_CSV_URL, {
         download: true, header: true, skipEmptyLines: true,
@@ -509,7 +664,7 @@
     function toggleIndicacao(id) {
       if (!eventoAtualSessao) {
         mostrarToast('Selecione um evento primeiro em 📅 Eventos!');
-        abrirModalEventos();
+        if(usuarioLogado && usuarioLogado.isAdmin) abrirModalEventos();
         return;
       }
       if (!indicacoesPorEvento[eventoAtualSessao]) indicacoesPorEvento[eventoAtualSessao] = [];
@@ -581,14 +736,12 @@
 
       mostrarToast('Planilha Excel exportada com sucesso!');
     }
-    
-    function sair() { 
-      sessionStorage.removeItem('rock_evento_atual');
-      mostrarToast('Sessão encerrada!');
-      setTimeout(() => location.reload(), 1000);
-    }
 
-    inicializarEventos();
+    // Inicialização do sistema
+    atualizarInterfaceUsuario();
+    if (usuarioLogado) {
+      inicializarEventos();
+    }
     carregarPlanilha();
   </script>
 </body>
