@@ -40,16 +40,24 @@
       width: 100%; padding: 4px 6px; font-size: 12px; border: 1px solid #495057; border-radius: 4px; background: #fff; color: #212529;
     }
 
-    tbody td { padding: 10px 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; white-space: nowrap; }
+    tbody td { padding: 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; white-space: nowrap; }
     tbody tr:hover { background-color: #f8f9fa; }
 
-    /* Elementos visuais das colunas */
+    /* Badges e Botões de Ação */
     .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; font-size: 12px; }
     .btn-cifra {
       background-color: #dc3545; color: white; text-decoration: none; padding: 4px 10px;
       border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;
     }
-    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; }
+
+    .btn-action {
+      background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 12px; transition: transform 0.1s;
+    }
+    .btn-action:hover { transform: scale(1.2); }
+
+    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #ced4da; }
+    .pill-like.active { background-color: #ffc107; color: #000; border-color: #ffc107; }
+
     .pill-acesso { background-color: #0d6efd; color: white; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-block; }
     
     .loading { text-align: center; padding: 25px; font-size: 15px; font-weight: bold; color: #555; }
@@ -95,10 +103,25 @@
           <th><input type="text" id="filtroMusica" class="filter-input" placeholder="Música..." oninput="filtrarData()"></th>
           <th><select id="filtroTom" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
           <th><select id="filtroCifra" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
-          <th><select id="filtroMeu" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
-          <th><select id="filtroLikes" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th>
+            <select id="filtroMeu" class="filter-select" onchange="filtrarData()">
+              <option value="">Todas</option>
+              <option value="fav">Favoritas (❤️)</option>
+            </select>
+          </th>
+          <th>
+            <select id="filtroLikes" class="filter-select" onchange="filtrarData()">
+              <option value="">Todos</option>
+              <option value="liked">Curtidas (👍)</option>
+            </select>
+          </th>
           <th><select id="filtroAcessos" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
-          <th><select id="filtroErro" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th>
+            <select id="filtroErro" class="filter-select" onchange="filtrarData()">
+              <option value="">Todos</option>
+              <option value="erro">Com Erro (⚠️)</option>
+            </select>
+          </th>
         </tr>
       </thead>
       <tbody id="corpoTabela">
@@ -112,6 +135,11 @@
 
     let repertorioOriginal = [];
 
+    // Estado salvo localmente no navegador
+    let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
+    let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
+    let errosLocais = JSON.parse(localStorage.getItem('rock_erros') || '[]');
+
     function carregarPlanilha() {
       Papa.parse(PLANILHA_CSV_URL, {
         download: true,
@@ -119,23 +147,22 @@
         skipEmptyLines: true,
         complete: function(results) {
           repertorioOriginal = results.data.map((item, index) => ({
+            id: String(item['Seq.'] || item['Seq'] || (index + 1)),
             num: item['Seq.'] || item['Seq'] || (index + 1),
             estilo: item['Stilo'] || item['Estilo'] || '',
             banda: item['Banda'] || item['Artista'] || '',
             musica: item['Música'] || item['Musica'] || '',
             tom: item['Tom'] || '',
             cifra: item['Links das Cifras'] || item['Cifra'] || '#',
-            meu: item['Meu'] || '🤍',
-            likes: item['Likes'] || '0',
-            acessos: item['Acessos'] || '0',
-            erro: item['Erro'] || '🟣'
+            likes: parseInt(item['Likes'] || '0', 10),
+            acessos: item['Acessos'] || '0'
           })).filter(m => m.musica);
 
           preencherFiltros(repertorioOriginal);
           renderizarTabela(repertorioOriginal);
         },
         error: function() {
-          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="10" style="color:red; text-align:center;">Erro ao carregar planilha. Verifique se o link está publicado publicamente.</td></tr>';
+          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="10" style="color:red; text-align:center;">Erro ao carregar planilha.</td></tr>';
         }
       });
     }
@@ -171,6 +198,11 @@
       }
 
       dados.forEach((item) => {
+        const isFav = favoritos.includes(item.id);
+        const hasLike = !!likesLocais[item.id];
+        const totalLikes = item.likes + (hasLike ? 1 : 0);
+        const hasErro = errosLocais.includes(item.id);
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${item.num}</td>
@@ -181,13 +213,49 @@
           <td>
             ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra">📌 Cifra</a>` : '-'}
           </td>
-          <td>🤍</td>
-          <td><span class="pill-like">👍 ${item.likes}</span></td>
+          <td>
+            <button class="btn-action" onclick="toggleFavorito('${item.id}')" title="Favoritar">
+              ${isFav ? '❤️' : '🤍'}
+            </button>
+          </td>
+          <td>
+            <button class="btn-action pill-like ${hasLike ? 'active' : ''}" onclick="toggleLike('${item.id}')" title="Curtir">
+              👍 ${totalLikes}
+            </button>
+          </td>
           <td><span class="pill-acesso">${item.acessos}</span></td>
-          <td>🟣</td>
+          <td>
+            <button class="btn-action" onclick="toggleErro('${item.id}')" title="Reportar Erro">
+              ${hasErro ? '⚠️' : '🟣'}
+            </button>
+          </td>
         `;
         corpo.appendChild(tr);
       });
+    }
+
+    // Funções de Ação
+    function toggleFavorito(id) {
+      const idx = favoritos.indexOf(id);
+      if (idx > -1) favoritos.splice(idx, 1);
+      else favoritos.push(id);
+      localStorage.setItem('rock_favs', JSON.stringify(favoritos));
+      filtrarData();
+    }
+
+    function toggleLike(id) {
+      if (likesLocais[id]) delete likesLocais[id];
+      else likesLocais[id] = true;
+      localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
+      filtrarData();
+    }
+
+    function toggleErro(id) {
+      const idx = errosLocais.indexOf(id);
+      if (idx > -1) errosLocais.splice(idx, 1);
+      else errosLocais.push(id);
+      localStorage.setItem('rock_erros', JSON.stringify(errosLocais));
+      filtrarData();
     }
 
     function filtrarData() {
@@ -197,8 +265,15 @@
       const banda = document.getElementById('filtroBanda').value;
       const musica = document.getElementById('filtroMusica').value.toLowerCase();
       const tom = document.getElementById('filtroTom').value;
+      const meu = document.getElementById('filtroMeu').value;
+      const likesFilter = document.getElementById('filtroLikes').value;
+      const erroFilter = document.getElementById('filtroErro').value;
 
       const filtrados = repertorioOriginal.filter(item => {
+        const isFav = favoritos.includes(item.id);
+        const hasLike = !!likesLocais[item.id];
+        const hasErro = errosLocais.includes(item.id);
+
         const atendeGeral = !busca || 
           String(item.num).toLowerCase().includes(busca) ||
           item.estilo.toLowerCase().includes(busca) ||
@@ -211,30 +286,32 @@
         const atendeBanda = !banda || item.banda === banda;
         const atendeMusica = !musica || item.musica.toLowerCase().includes(musica);
         const atendeTom = !tom || item.tom === tom;
+        const atendeMeu = !meu || (meu === 'fav' && isFav);
+        const atendeLikes = !likesFilter || (likesFilter === 'liked' && hasLike);
+        const atendeErro = !erroFilter || (erroFilter === 'erro' && hasErro);
 
-        return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom;
+        return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom && atendeMeu && atendeLikes && atendeErro;
       });
 
       renderizarTabela(filtrados);
     }
 
-    // Função de Tela Cheia Real (Alterna para Entrar / Sair)
+    // Tela Cheia compatível com iFrames (Google Sites)
     function toggleTelaCheia() {
-      const btn = document.getElementById('btnTelaCheia');
+      const isIframe = window.self !== window.top;
+      
+      if (isIframe) {
+        window.open(window.location.href, '_blank');
+        return;
+      }
+
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        if (document.documentElement.requestFullscreen) {
-          document.documentElement.requestFullscreen();
-        } else if (document.documentElement.webkitRequestFullscreen) {
-          document.documentElement.webkitRequestFullscreen();
-        }
-        btn.innerHTML = '↙️ Sair da Tela Cheia';
+        const el = document.documentElement;
+        if (el.requestFullscreen) el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
       } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        }
-        btn.innerHTML = '↗️ Tela Cheia';
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
       }
     }
 
