@@ -132,8 +132,8 @@
   <script>
     const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
     
-    // Cole aqui o URL gerado no Apps Script (Passo 1). Se deixado em branco, abre confirmação local.
-    const SCRIPT_ERRO_URL = ''; 
+    // Insira aqui a URL gerada na Implantação do Apps Script
+    const SCRIPT_API_URL = ''; 
 
     let repertorioOriginal = [];
     let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
@@ -158,7 +158,7 @@
               tom: item['Tom'] || '',
               cifra: item['Links das Cifras'] || item['Cifra'] || '#',
               likes: parseInt(item['Likes'] || '0', 10),
-              acessos: item['Acessos'] || '0',
+              acessos: parseInt(item['Acessos'] || '0', 10),
               temErro: temErroConsolidado
             };
           }).filter(m => m.musica);
@@ -215,7 +215,7 @@
           <td>${item.musica}</td>
           <td>${item.tom ? `<span class="tom-badge">${item.tom}</span>` : ''}</td>
           <td>
-            ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra">📌 Cifra</a>` : '-'}
+            ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra" onclick="registrarAcesso('${item.id}')">📌 Cifra</a>` : '-'}
           </td>
           <td>
             <button class="btn-action" onclick="toggleFavorito('${item.id}')" title="Favoritar (Meu)">
@@ -227,7 +227,7 @@
               👍 ${totalLikes}
             </button>
           </td>
-          <td><span class="pill-acesso">${item.acessos}</span></td>
+          <td><span class="pill-acesso" id="acesso-${item.id}">${item.acessos}</span></td>
           <td>
             <button class="btn-action" onclick="reportarErro('${item.id}', '${item.musica.replace(/'/g, "\\'")}')" title="Reportar erro ao Administrador">
               ${item.temErro ? '⚠️' : '🟣'}
@@ -236,6 +236,19 @@
         `;
         corpo.appendChild(tr);
       });
+    }
+
+    function registrarAcesso(id) {
+      const item = repertorioOriginal.find(m => m.id === id);
+      if (item) {
+        item.acessos += 1;
+        const elAcesso = document.getElementById(`acesso-${id}`);
+        if (elAcesso) elAcesso.textContent = item.acessos;
+      }
+
+      if (SCRIPT_API_URL) {
+        fetch(`${SCRIPT_API_URL}?id=${id}&action=acesso`, { mode: 'no-cors' });
+      }
     }
 
     function toggleFavorito(id) {
@@ -255,12 +268,12 @@
 
     function reportarErro(id, titulo) {
       if (confirm(`Deseja notificar o Administrador sobre um erro na música "${titulo}"?`)) {
-        if (SCRIPT_ERRO_URL) {
-          fetch(`${SCRIPT_ERRO_URL}?id=${id}`, { mode: 'no-cors' })
+        if (SCRIPT_API_URL) {
+          fetch(`${SCRIPT_API_URL}?id=${id}&action=erro`, { mode: 'no-cors' })
             .then(() => alert('Erro reportado ao Administrador com sucesso!'))
             .catch(() => alert('Falha ao enviar reporte.'));
         } else {
-          alert('Erro sinalizado! (Obs: Configure o SCRIPT_ERRO_URL no código para gravar automaticamente na Planilha Google).');
+          alert('Erro sinalizado!');
         }
       }
     }
@@ -303,18 +316,23 @@
     }
 
     function toggleTelaCheia() {
-      const isIframe = window.self !== window.top;
-      if (isIframe) {
-        window.open(window.location.href, '_blank');
-        return;
-      }
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         const el = document.documentElement;
-        if (el.requestFullscreen) el.requestFullscreen();
-        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        if (el.requestFullscreen) {
+          el.requestFullscreen();
+        } else if (el.webkitRequestFullscreen) {
+          el.webkitRequestFullscreen();
+        } else if (el.msRequestFullscreen) {
+          el.msRequestFullscreen();
+        }
       } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
       }
     }
 
