@@ -1,91 +1,98 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rockonhasemonha - Repertório</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-    body { background-color: #f4f6f9; color: #333; padding: 12px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rockonhasemonha - Repertório</title>
+  <!-- PapaParse para ler a planilha em tempo real -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+body { background-color: #f4f6f9; color: #333; padding: 10px; }
+
+header {
+background-color: #212529; color: #fff; padding: 12px 20px;
+display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+border-radius: 6px; margin-bottom: 15px;
+}
+.user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+.badge { background: #dc3545; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+.actions { display: flex; gap: 8px; }
+.btn { padding: 8px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; font-size: 13px; }
+.btn-green { background-color: #198754; }
+.btn-blue { background-color: #0dcaf0; color: #000; }
+.btn-dark { background-color: #ffc107; color: #000; }
+.btn-red { background-color: #dc3545; }
+
+.search-bar { width: 100%; margin-bottom: 15px; }
+.search-bar input {
+width: 100%; padding: 12px; font-size: 15px; border: 1px solid #ced4da; border-radius: 6px;
+}
+
+.table-container { overflow-x: auto; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    th { background-color: #212529; color: white; padding: 10px; text-transform: uppercase; font-size: 11px; }
+    td { padding: 10px; border-bottom: 1px solid #dee2e6; }
+    tr:hover { background-color: #f1f3f5; }
+
+    thead tr.header-titles { background-color: #212529; color: white; }
+    thead tr.header-titles th { padding: 10px 8px; font-size: 11px; text-transform: uppercase; font-weight: bold; white-space: nowrap; }
     
-    header {
-      background-color: #212529; color: #fff; padding: 10px 16px;
-      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-      border-radius: 6px; margin-bottom: 12px;
-    }
-    .user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; }
-    .badge-admin { background: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
-    
-    .actions { display: flex; gap: 8px; }
-    .btn { padding: 8px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }
-    .btn-dark { background-color: #ffc107; color: #000; }
-    .btn-blue { background-color: #0dcaf0; color: #000; }
-    .btn-green { background-color: #198754; color: #fff; }
-    .btn-red { background-color: #dc3545; color: #fff; }
+    thead tr.header-filters { background-color: #212529; }
+    thead tr.header-filters th { padding: 0 6px 8px 6px; }
 
-    .search-bar { width: 100%; margin-bottom: 12px; }
-    .search-bar input {
-      width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #ced4da; border-radius: 6px; background: white;
-    }
+.filter-select, .filter-input {
+      width: 100%; padding: 4px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; margin-top: 4px;
+      width: 100%; padding: 5px; font-size: 12px; border: 1px solid #ced4da; border-radius: 4px; background: white; color: #333;
+}
 
-    .table-container { overflow-x: auto; background: white; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-    
-    thead { background-color: #212529; color: white; }
-    thead tr.titles th { padding: 10px 8px 4px 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
-    thead tr.filters th { padding: 4px 6px 10px 6px; }
+    td { padding: 10px 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; }
+    tr:hover { background-color: #f8f9fa; }
 
-    .filter-select, .filter-input {
-      width: 100%; padding: 4px 6px; font-size: 12px; border: 1px solid #495057; border-radius: 4px; background: #fff; color: #212529;
-    }
-
-    tbody td { padding: 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; white-space: nowrap; }
-    tbody tr:hover { background-color: #f8f9fa; }
-
-    /* Badges e Botões de Ação */
-    .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; font-size: 12px; }
-    .btn-cifra {
+    /* Estilos das Badges da versão original */
+    .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; }
+.btn-cifra {
       background-color: #dc3545; color: white; text-decoration: none; padding: 4px 10px;
+      border-radius: 4px; font-weight: bold; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;
+      background-color: #dc3545; color: white; text-decoration: none; padding: 4px 8px;
       border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;
-    }
+}
+    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: bold; display: inline-block; }
+    .pill-acesso { background-color: #0d6efd; color: white; border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: bold; display: inline-block; }
 
-    .btn-action {
-      background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 12px; transition: transform 0.1s;
-    }
-    .btn-action:hover { transform: scale(1.2); }
-
-    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #ced4da; }
-    .pill-like.active { background-color: #ffc107; color: #000; border-color: #ffc107; }
-
-    .pill-acesso { background-color: #0d6efd; color: white; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-block; }
-    
-    .loading { text-align: center; padding: 25px; font-size: 15px; font-weight: bold; color: #555; }
-  </style>
+.loading { text-align: center; padding: 20px; font-size: 16px; font-weight: bold; }
+</style>
 </head>
 <body>
 
-  <header>
-    <div class="user-info">
-      👤 marcos.angelo@ifal.edu.br <span class="badge-admin">ADMINISTRADOR</span>
-    </div>
-    <div class="actions">
-      <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
-      <button class="btn btn-blue" onclick="exportarCSV()">⬇️ Exportar CSV</button>
-      <button class="btn btn-green" id="btnTelaCheia" onclick="toggleTelaCheia()">↗️ Tela Cheia</button>
-      <button class="btn btn-red" onclick="sair()">Sair</button>
-    </div>
-  </header>
+<header>
+<div class="user-info">
+👤 marcos.angelo@ifal.edu.br <span class="badge">ADMINISTRADOR</span>
+</div>
+<div class="actions">
+<button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
+<button class="btn btn-blue" onclick="exportarCSV()">⬇️ Exportar CSV</button>
+      <button class="btn btn-green" onclick="abrirTelaCheia()">↗️ Tela Cheia</button>
+      <button class="btn btn-green" onclick="toggleTelaCheia()">↗️ Tela Cheia</button>
+<button class="btn btn-red" onclick="sair()">Sair</button>
+</div>
+</header>
 
-  <div class="search-bar">
-    <input type="text" id="buscaGeral" placeholder="🔍 Busca Geral (Pesquise qualquer coisa aqui...)" oninput="filtrarData()">
-  </div>
+<div class="search-bar">
+<input type="text" id="buscaGeral" placeholder="🔍 Busca Geral (Pesquise qualquer coisa aqui...)" oninput="filtrarData()">
+</div>
 
-  <div class="table-container">
-    <table id="tabelaRepertorio">
-      <thead>
-        <tr class="titles">
-          <th>Nº</th>
+<div class="table-container">
+<table id="tabelaRepertorio">
+<thead>
+        <tr>
+        <tr class="header-titles">
+<th>Nº</th>
+          <th>Estilo<br><select id="filtroEstilo" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th>Banda / Artista<br><select id="filtroBanda" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
+          <th>Música<br><input type="text" id="filtroMusica" class="filter-input" placeholder="Música..." oninput="filtrarData()"></th>
+          <th>Tom<br><select id="filtroTom" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th>Cifra</th>
           <th>ESTILO</th>
           <th>BANDA / ARTISTA</th>
           <th>MÚSICA</th>
@@ -96,239 +103,172 @@
           <th>ACESSOS</th>
           <th>⚠️ ERRO</th>
         </tr>
-        <tr class="filters">
+        <tr class="header-filters">
           <th><input type="text" id="filtroNum" class="filter-input" placeholder="Nº..." oninput="filtrarData()"></th>
           <th><select id="filtroEstilo" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
           <th><select id="filtroBanda" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
           <th><input type="text" id="filtroMusica" class="filter-input" placeholder="Música..." oninput="filtrarData()"></th>
           <th><select id="filtroTom" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
           <th><select id="filtroCifra" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
-          <th>
-            <select id="filtroMeu" class="filter-select" onchange="filtrarData()">
-              <option value="">Todas</option>
-              <option value="fav">Favoritas (❤️)</option>
-            </select>
-          </th>
-          <th>
-            <select id="filtroLikes" class="filter-select" onchange="filtrarData()">
-              <option value="">Todos</option>
-              <option value="liked">Curtidas (👍)</option>
-            </select>
-          </th>
+          <th><select id="filtroMeu" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
+          <th><select id="filtroLikes" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
           <th><select id="filtroAcessos" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
-          <th>
-            <select id="filtroErro" class="filter-select" onchange="filtrarData()">
-              <option value="">Todos</option>
-              <option value="erro">Com Erro (⚠️)</option>
-            </select>
-          </th>
-        </tr>
-      </thead>
-      <tbody id="corpoTabela">
+          <th><select id="filtroErro" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+</tr>
+</thead>
+<tbody id="corpoTabela">
+        <tr><td colspan="6" class="loading">Carregando repertório da Planilha Google...</td></tr>
         <tr><td colspan="10" class="loading">Carregando repertório da Planilha Google...</td></tr>
-      </tbody>
-    </table>
-  </div>
+</tbody>
+</table>
+</div>
 
-  <script>
-    const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
+<script>
+    // Link CSV fornecido da Planilha Google
+const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
 
-    let repertorioOriginal = [];
+let repertorioOriginal = [];
 
-    // Estado salvo localmente no navegador
-    let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
-    let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
-    let errosLocais = JSON.parse(localStorage.getItem('rock_erros') || '[]');
-
-    function carregarPlanilha() {
-      Papa.parse(PLANILHA_CSV_URL, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          repertorioOriginal = results.data.map((item, index) => ({
-            id: String(item['Seq.'] || item['Seq'] || (index + 1)),
-            num: item['Seq.'] || item['Seq'] || (index + 1),
-            estilo: item['Stilo'] || item['Estilo'] || '',
-            banda: item['Banda'] || item['Artista'] || '',
-            musica: item['Música'] || item['Musica'] || '',
-            tom: item['Tom'] || '',
+function carregarPlanilha() {
+Papa.parse(PLANILHA_CSV_URL, {
+download: true,
+header: true,
+skipEmptyLines: true,
+complete: function(results) {
+repertorioOriginal = results.data.map((item, index) => ({
+num: item['Seq.'] || item['Seq'] || (index + 1),
+estilo: item['Stilo'] || item['Estilo'] || '',
+banda: item['Banda'] || item['Artista'] || '',
+musica: item['Música'] || item['Musica'] || '',
+tom: item['Tom'] || '',
+            cifra: item['Links das Cifras'] || item['Cifra'] || '#'
             cifra: item['Links das Cifras'] || item['Cifra'] || '#',
-            likes: parseInt(item['Likes'] || '0', 10),
-            acessos: item['Acessos'] || '0'
-          })).filter(m => m.musica);
+            meu: item['Meu'] || '🤍',
+            likes: item['Likes'] || '0',
+            acessos: item['Acessos'] || '0',
+            erro: item['Erro'] || '🟣'
+})).filter(m => m.musica);
 
-          preencherFiltros(repertorioOriginal);
-          renderizarTabela(repertorioOriginal);
-        },
+preencherFiltros(repertorioOriginal);
+renderizarTabela(repertorioOriginal);
+},
+        error: function(err) {
+          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="6" style="color:red; text-align:center;">Erro ao carregar planilha. Verifique se a planilha está aberta para acesso.</td></tr>';
         error: function() {
-          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="10" style="color:red; text-align:center;">Erro ao carregar planilha.</td></tr>';
-        }
-      });
-    }
+          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="10" style="color:red; text-align:center;">Erro ao carregar planilha. Verifique se o link está publicado público.</td></tr>';
+}
+});
+}
 
-    function preencherFiltros(dados) {
-      const estilos = [...new Set(dados.map(d => d.estilo))].filter(Boolean).sort();
-      const bandas = [...new Set(dados.map(d => d.banda))].filter(Boolean).sort();
-      const tons = [...new Set(dados.map(d => d.tom))].filter(Boolean).sort();
+function preencherFiltros(dados) {
+const estilos = [...new Set(dados.map(d => d.estilo))].filter(Boolean).sort();
+const bandas = [...new Set(dados.map(d => d.banda))].filter(Boolean).sort();
+const tons = [...new Set(dados.map(d => d.tom))].filter(Boolean).sort();
 
-      preencherSelect('filtroEstilo', estilos);
-      preencherSelect('filtroBanda', bandas);
-      preencherSelect('filtroTom', tons);
-    }
+preencherSelect('filtroEstilo', estilos);
+preencherSelect('filtroBanda', bandas);
+preencherSelect('filtroTom', tons);
+}
 
-    function preencherSelect(id, lista) {
-      const select = document.getElementById(id);
-      select.innerHTML = select.children[0].outerHTML;
-      lista.forEach(item => {
-        const opt = document.createElement('option');
-        opt.value = item;
-        opt.textContent = item;
-        select.appendChild(opt);
-      });
-    }
+function preencherSelect(id, lista) {
+const select = document.getElementById(id);
+select.innerHTML = select.children[0].outerHTML;
+lista.forEach(item => {
+const opt = document.createElement('option');
+opt.value = item;
+opt.textContent = item;
+select.appendChild(opt);
+});
+}
 
-    function renderizarTabela(dados) {
-      const corpo = document.getElementById('corpoTabela');
-      corpo.innerHTML = '';
+function renderizarTabela(dados) {
+const corpo = document.getElementById('corpoTabela');
+corpo.innerHTML = '';
 
-      if (dados.length === 0) {
+if (dados.length === 0) {
+        corpo.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhuma música encontrada.</td></tr>';
         corpo.innerHTML = '<tr><td colspan="10" style="text-align:center;">Nenhuma música encontrada.</td></tr>';
-        return;
-      }
+return;
+}
 
-      dados.forEach((item) => {
-        const isFav = favoritos.includes(item.id);
-        const hasLike = !!likesLocais[item.id];
-        const totalLikes = item.likes + (hasLike ? 1 : 0);
-        const hasErro = errosLocais.includes(item.id);
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${item.num}</td>
-          <td>${item.estilo}</td>
-          <td><b>${item.banda}</b></td>
-          <td>${item.musica}</td>
-          <td>${item.tom ? `<span class="tom-badge">${item.tom}</span>` : ''}</td>
-          <td>
+dados.forEach((item) => {
+const tr = document.createElement('tr');
+tr.innerHTML = `
+         <td>${item.num}</td>
+         <td>${item.estilo}</td>
+         <td><b>${item.banda}</b></td>
+         <td>${item.musica}</td>
+          <td><b>${item.tom}</b></td>
+          <td><span class="tom-badge">${item.tom}</span></td>
+         <td>
+            ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" rel="noopener noreferrer" class="btn-cifra">📌 Cifra</a>` : '-'}
             ${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra">📌 Cifra</a>` : '-'}
-          </td>
-          <td>
-            <button class="btn-action" onclick="toggleFavorito('${item.id}')" title="Favoritar">
-              ${isFav ? '❤️' : '🤍'}
-            </button>
-          </td>
-          <td>
-            <button class="btn-action pill-like ${hasLike ? 'active' : ''}" onclick="toggleLike('${item.id}')" title="Curtir">
-              👍 ${totalLikes}
-            </button>
-          </td>
+         </td>
+          <td>🤍</td>
+          <td><span class="pill-like">👍 ${item.likes}</span></td>
           <td><span class="pill-acesso">${item.acessos}</span></td>
-          <td>
-            <button class="btn-action" onclick="toggleErro('${item.id}')" title="Reportar Erro">
-              ${hasErro ? '⚠️' : '🟣'}
-            </button>
-          </td>
-        `;
-        corpo.appendChild(tr);
-      });
-    }
+          <td>🟣</td>
+       `;
+corpo.appendChild(tr);
+});
+}
 
-    // Funções de Ação
-    function toggleFavorito(id) {
-      const idx = favoritos.indexOf(id);
-      if (idx > -1) favoritos.splice(idx, 1);
-      else favoritos.push(id);
-      localStorage.setItem('rock_favs', JSON.stringify(favoritos));
-      filtrarData();
-    }
-
-    function toggleLike(id) {
-      if (likesLocais[id]) delete likesLocais[id];
-      else likesLocais[id] = true;
-      localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
-      filtrarData();
-    }
-
-    function toggleErro(id) {
-      const idx = errosLocais.indexOf(id);
-      if (idx > -1) errosLocais.splice(idx, 1);
-      else errosLocais.push(id);
-      localStorage.setItem('rock_erros', JSON.stringify(errosLocais));
-      filtrarData();
-    }
-
-    function filtrarData() {
-      const busca = document.getElementById('buscaGeral').value.toLowerCase();
+function filtrarData() {
+const busca = document.getElementById('buscaGeral').value.toLowerCase();
       const num = document.getElementById('filtroNum').value.toLowerCase();
-      const estilo = document.getElementById('filtroEstilo').value;
-      const banda = document.getElementById('filtroBanda').value;
-      const musica = document.getElementById('filtroMusica').value.toLowerCase();
-      const tom = document.getElementById('filtroTom').value;
-      const meu = document.getElementById('filtroMeu').value;
-      const likesFilter = document.getElementById('filtroLikes').value;
-      const erroFilter = document.getElementById('filtroErro').value;
+const estilo = document.getElementById('filtroEstilo').value;
+const banda = document.getElementById('filtroBanda').value;
+const musica = document.getElementById('filtroMusica').value.toLowerCase();
+const tom = document.getElementById('filtroTom').value;
 
-      const filtrados = repertorioOriginal.filter(item => {
-        const isFav = favoritos.includes(item.id);
-        const hasLike = !!likesLocais[item.id];
-        const hasErro = errosLocais.includes(item.id);
-
-        const atendeGeral = !busca || 
+const filtrados = repertorioOriginal.filter(item => {
+const atendeGeral = !busca || 
           String(item.num).toLowerCase().includes(busca) ||
-          item.estilo.toLowerCase().includes(busca) ||
-          item.banda.toLowerCase().includes(busca) ||
-          item.musica.toLowerCase().includes(busca) ||
-          item.tom.toLowerCase().includes(busca);
+item.estilo.toLowerCase().includes(busca) ||
+item.banda.toLowerCase().includes(busca) ||
+item.musica.toLowerCase().includes(busca) ||
+item.tom.toLowerCase().includes(busca);
 
         const atendeNum = !num || String(item.num).toLowerCase().includes(num);
-        const atendeEstilo = !estilo || item.estilo === estilo;
-        const atendeBanda = !banda || item.banda === banda;
-        const atendeMusica = !musica || item.musica.toLowerCase().includes(musica);
-        const atendeTom = !tom || item.tom === tom;
-        const atendeMeu = !meu || (meu === 'fav' && isFav);
-        const atendeLikes = !likesFilter || (likesFilter === 'liked' && hasLike);
-        const atendeErro = !erroFilter || (erroFilter === 'erro' && hasErro);
+const atendeEstilo = !estilo || item.estilo === estilo;
+const atendeBanda = !banda || item.banda === banda;
+const atendeMusica = !musica || item.musica.toLowerCase().includes(musica);
+const atendeTom = !tom || item.tom === tom;
 
-        return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom && atendeMeu && atendeLikes && atendeErro;
-      });
+        return atendeGeral && atendeEstilo && atendeBanda && atendeMusica && atendeTom;
+        return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom;
+});
 
-      renderizarTabela(filtrados);
-    }
+renderizarTabela(filtrados);
+}
 
-    // Tela Cheia compatível com iFrames (Google Sites)
+    function abrirTelaCheia() { window.open(window.location.href, '_blank'); }
+    // Alternar modo Tela Cheia real (Entrar e Sair)
     function toggleTelaCheia() {
-      const isIframe = window.self !== window.top;
-      
-      if (isIframe) {
-        window.open(window.location.href, '_blank');
-        return;
-      }
-
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        const el = document.documentElement;
-        if (el.requestFullscreen) el.requestFullscreen();
-        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          alert("Não foi possível ativar a tela cheia: " + err.message);
+        });
       } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
       }
     }
 
-    function toggleDarkMode() { document.body.style.filter = document.body.style.filter ? '' : 'invert(0.9) hue-rotate(180deg)'; }
-    function exportarCSV() {
-      let csv = 'Nº,Estilo,Banda,Musica,Tom,Cifra\n';
-      repertorioOriginal.forEach(r => { csv += `"${r.num}","${r.estilo}","${r.banda}","${r.musica}","${r.tom}","${r.cifra}"\n`; });
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'repertorio_rockonha.csv';
-      a.click();
-    }
-    function sair() { alert('Sessão encerrada.'); }
+function toggleDarkMode() { document.body.style.filter = document.body.style.filter ? '' : 'invert(0.9) hue-rotate(180deg)'; }
+function exportarCSV() {
+let csv = 'Nº,Estilo,Banda,Musica,Tom,Cifra\n';
+repertorioOriginal.forEach(r => { csv += `"${r.num}","${r.estilo}","${r.banda}","${r.musica}","${r.tom}","${r.cifra}"\n`; });
+const blob = new Blob([csv], { type: 'text/csv' });
+const url = window.URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = 'repertorio_rockonha.csv';
+a.click();
+}
+function sair() { alert('Sessão encerrada.'); }
 
-    carregarPlanilha();
-  </script>
+carregarPlanilha();
+</script>
 </body>
-</html>
