@@ -437,7 +437,6 @@
         return;
       }
 
-      // Prepara os dados formatados por colunas
       const dadosExportacao = dadosFiltrados.map(r => {
         const isFav = favoritos.includes(r.id);
         const hasLike = !!likesLocais[r.id];
@@ -458,10 +457,8 @@
         };
       });
 
-      // Cria a folha de trabalho
       const ws = XLSX.utils.json_to_sheet(dadosExportacao);
 
-      // Define larguras ideais para cada coluna no Excel
       ws['!cols'] = [
         { wch: 6 },  // Nº
         { wch: 22 }, // ESTILO
@@ -476,7 +473,6 @@
         { wch: 8 }   // ERRO
       ];
 
-      // Cria a pasta de trabalho e exporta o arquivo .xlsx
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Repertório");
       XLSX.writeFile(wb, 'repertorio_rockonha.xlsx');
