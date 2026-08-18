@@ -20,7 +20,6 @@
     .user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .badge-admin { background: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
     .badge-membro { background: #0d6efd; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
-    .badge-visitante { background: #6c757d; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
     .evento-ativo-badge { background: #198754; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; display: none; }
     
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -62,14 +61,19 @@
     .paginacao { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 15px; background: white; border-top: 1px solid #ddd; }
     .paginacao span { font-weight: bold; font-size: 14px; }
 
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; }
-    .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 420px; color: #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    /* Modais */
+    .modal-overlay { 
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 10000; 
+      align-items: center; justify-content: center; 
+    }
+    .modal-content { background: #fff; padding: 24px; border-radius: 8px; width: 90%; max-width: 420px; color: #333; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
     .modal-content h3 { margin-bottom: 12px; font-size: 18px; }
     .modal-content input { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
     
     .auth-tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 15px; }
-    .auth-tab { flex: 1; text-align: center; padding: 8px; cursor: pointer; font-weight: bold; color: #666; }
+    .auth-tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; font-weight: bold; color: #666; }
     .auth-tab.active { color: #0d6efd; border-bottom: 2px solid #0d6efd; }
 
     .lista-eventos-modal { max-height: 200px; overflow-y: auto; margin-bottom: 15px; padding: 0; list-style: none; border: 1px solid #eee; border-radius: 4px; }
@@ -84,10 +88,10 @@
 
   <header>
     <div class="user-info" id="userInfoDisplay">
-      <!-- Preenchido via JavaScript -->
+      <!-- Informações do usuário logado -->
     </div>
     <div class="actions" id="headerActionsDisplay">
-      <!-- Preenchido via JavaScript -->
+      <!-- Botões do Header -->
     </div>
   </header>
 
@@ -126,7 +130,7 @@
         </tr>
       </thead>
       <tbody id="corpoTabela">
-        <tr><td colspan="11" class="loading">Carregando repertório da Planilha Google...</td></tr>
+        <tr><td colspan="11" class="loading">Aguardando login para carregar repertório...</td></tr>
       </tbody>
     </table>
 
@@ -137,12 +141,12 @@
     </div>
   </div>
 
-  <!-- Modal Unificada de Login e Cadastro -->
+  <!-- Modal Unificada de Login e Cadastro (Sem opção de fechar para visitantes) -->
   <div id="modalAuth" class="modal-overlay">
     <div class="modal-content">
       <div class="auth-tabs">
-        <div id="tabLogin" class="auth-tab active" onclick="alternarAbaAuth('login')">Login</div>
-        <div id="tabCadastro" class="auth-tab" onclick="alternarAbaAuth('cadastro')">Novo Cadastro</div>
+        <div id="tabLogin" class="auth-tab active" onclick="alternarAbaAuth('login')">Entrar</div>
+        <div id="tabCadastro" class="auth-tab" onclick="alternarAbaAuth('cadastro')">Criar Conta</div>
       </div>
 
       <!-- Formulário de Login -->
@@ -150,8 +154,7 @@
         <input type="email" id="loginEmailInput" placeholder="Seu E-mail...">
         <input type="password" id="loginSenhaInput" placeholder="Sua Senha..." onkeyup="if(event.key==='Enter') executarLogin()">
         <div class="modal-buttons">
-          <button class="btn btn-red" onclick="fecharModal('modalAuth')">Cancelar</button>
-          <button class="btn btn-green" onclick="executarLogin()">Entrar</button>
+          <button class="btn btn-green" style="width:100%; justify-content:center;" onclick="executarLogin()">Acessar Sistema</button>
         </div>
       </div>
 
@@ -161,8 +164,7 @@
         <input type="email" id="cadEmailInput" placeholder="Seu E-mail...">
         <input type="password" id="cadSenhaInput" placeholder="Crie uma Senha...">
         <div class="modal-buttons">
-          <button class="btn btn-red" onclick="fecharModal('modalAuth')">Cancelar</button>
-          <button class="btn btn-purple" onclick="executarCadastro()">Cadastrar</button>
+          <button class="btn btn-purple" style="width:100%; justify-content:center;" onclick="executarCadastro()">Finalizar Cadastro</button>
         </div>
       </div>
     </div>
@@ -208,11 +210,11 @@
     let repertorioOriginal = [];
     let dadosFiltrados = [];
     
-    // Usuários e Sessão
+    // Armazenamento Local Persistente (localStorage)
     let usuariosCadastrados = JSON.parse(localStorage.getItem('rock_users') || '[]');
-    let usuarioLogado = JSON.parse(sessionStorage.getItem('rock_logged_user') || 'null');
+    let usuarioLogado = JSON.parse(localStorage.getItem('rock_logged_user') || 'null');
 
-    // Dados de Interação
+    // Interações
     let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
     let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
     let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
@@ -232,11 +234,38 @@
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    function abrirEmNovaAba() {
-      window.open(window.location.href, '_blank');
+    // --- MODO TELA CHEIA NATIVO (SEM RECARREGAR A PÁGINA) ---
+    function toggleTelaCheia() {
+      if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+          document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) {
+          document.documentElement.msRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
     }
 
-    // --- GERENCIAMENTO DE CADASTRO / LOGIN ---
+    // --- AUTENTICAÇÃO OBRIGATÓRIA ---
+    function verificarAutenticacaoEIniciar() {
+      if (!usuarioLogado) {
+        abrirModal('modalAuth');
+      } else {
+        fecharModal('modalAuth');
+        atualizarInterfaceUsuario();
+        carregarPlanilha();
+        if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
+          renderizarBotoesEscolhaEvento();
+          abrirModal('modalEscolherEvento');
+        }
+      }
+    }
+
     function alternarAbaAuth(aba) {
       if (aba === 'login') {
         document.getElementById('tabLogin').classList.add('active');
@@ -271,10 +300,8 @@
       usuariosCadastrados.push(novoUsuario);
       localStorage.setItem('rock_users', JSON.stringify(usuariosCadastrados));
 
-      // Loga automaticamente após cadastrar
       efetuarLoginSessao(novoUsuario);
-      fecharModal('modalAuth');
-      mostrarToast(`Conta criada com sucesso! Bem-vindo, ${nome}!`);
+      mostrarToast(`Conta criada com sucesso! Bem-vindo(a), ${nome}!`);
     }
 
     function executarLogin() {
@@ -289,7 +316,6 @@
       const user = usuariosCadastrados.find(u => u.email === email && u.senha === senha);
       if (user) {
         efetuarLoginSessao(user);
-        fecharModal('modalAuth');
         mostrarToast(`Login efetuado com sucesso!`);
       } else {
         mostrarToast('E-mail ou senha incorretos!');
@@ -299,17 +325,19 @@
     function efetuarLoginSessao(user) {
       const isAdmin = user.email === EMAIL_ADMINISTRADOR;
       usuarioLogado = { ...user, isAdmin };
-      sessionStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
-      atualizarInterfaceUsuario();
-      filtrarData();
+      localStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
+      
+      verificarAutenticacaoEIniciar();
     }
 
     function efetuarLogout() {
       usuarioLogado = null;
-      sessionStorage.removeItem('rock_logged_user');
-      atualizarInterfaceUsuario();
-      filtrarData();
+      localStorage.removeItem('rock_logged_user');
+      sessionStorage.removeItem('rock_evento_atual');
+      eventoAtualSessao = '';
+      
       mostrarToast('Você saiu da sua conta.');
+      location.reload(); // Recarrega para bloquear a interface limpa
     }
 
     function atualizarInterfaceUsuario() {
@@ -334,33 +362,14 @@
           ${botoesAdmin}
           <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
           <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
-          <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
+          <button class="btn btn-green" onclick="toggleTelaCheia()">⛶ Tela Cheia</button>
           <button class="btn btn-red" onclick="efetuarLogout()">🚪 Sair</button>
-        `;
-      } else {
-        infoContainer.innerHTML = `
-          👤 Visitante <span class="badge-visitante">NÃO LOGADO</span>
-          <span id="badgeEventoAtivo" class="evento-ativo-badge">📍 Evento: Nenhum</span>
-        `;
-        actionsContainer.innerHTML = `
-          <button class="btn btn-purple" onclick="abrirModal('modalAuth')">🔑 Entrar / Cadastrar</button>
-          <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
-          <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
-          <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
         `;
       }
       atualizarBadgeEvento();
     }
 
     // --- GERENCIAMENTO DE EVENTOS ---
-    function inicializarEventos() {
-      atualizarInterfaceUsuario();
-      if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
-        renderizarBotoesEscolhaEvento();
-        abrirModal('modalEscolherEvento');
-      }
-    }
-
     function renderizarBotoesEscolhaEvento() {
       const divBotoes = document.getElementById('listaEventosBotoes');
       divBotoes.innerHTML = '';
@@ -505,7 +514,7 @@
       }
     }
 
-    // --- CARREGAMENTO E FILTROS DO REPERTÓRIO ---
+    // --- CARREGAMENTO DA PLANILHA GOOGLE ---
     function carregarPlanilha() {
       Papa.parse(PLANILHA_CSV_URL, {
         download: true, header: true, skipEmptyLines: true,
@@ -652,17 +661,7 @@
       }
     }
 
-    function checarAutenticacao() {
-      if (!usuarioLogado) {
-        mostrarToast('Faça login para interagir!');
-        abrirModal('modalAuth');
-        return false;
-      }
-      return true;
-    }
-
     function toggleFavorito(id) {
-      if (!checarAutenticacao()) return;
       const idx = favoritos.indexOf(id);
       if (idx > -1) favoritos.splice(idx, 1); else favoritos.push(id);
       localStorage.setItem('rock_favs', JSON.stringify(favoritos));
@@ -670,14 +669,12 @@
     }
 
     function toggleLike(id) {
-      if (!checarAutenticacao()) return;
       if (likesLocais[id]) delete likesLocais[id]; else likesLocais[id] = true;
       localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
       filtrarData();
     }
 
     function toggleIndicacao(id) {
-      if (!checarAutenticacao()) return;
       if (!eventoAtualSessao) {
         mostrarToast('Selecione um evento primeiro para poder indicar músicas!');
         if(eventosCadastrados.length > 0) abrirModal('modalEscolherEvento');
@@ -693,7 +690,6 @@
     }
 
     function toggleErro(id) {
-      if (!checarAutenticacao()) return;
       const item = repertorioOriginal.find(m => m.id === id);
       if (item) {
         item.temErro = !item.temErro;
@@ -754,9 +750,8 @@
       mostrarToast('Planilha Excel exportada com sucesso!');
     }
 
-    // Inicialização
-    inicializarEventos();
-    carregarPlanilha();
+    // Inicialização Obrigatória
+    verificarAutenticacaoEIniciar();
   </script>
 </body>
 </html>
