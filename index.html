@@ -19,6 +19,8 @@
     }
     .user-info { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .badge-admin { background: #dc3545; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    .badge-membro { background: #0d6efd; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    .badge-visitante { background: #6c757d; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
     .evento-ativo-badge { background: #198754; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; display: none; }
     
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -62,15 +64,18 @@
 
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; }
     .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 420px; color: #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-    .modal-content h3 { margin-bottom: 15px; font-size: 18px; }
-    .modal-content input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+    .modal-content h3 { margin-bottom: 12px; font-size: 18px; }
+    .modal-content input { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
     .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
     
+    .auth-tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 15px; }
+    .auth-tab { flex: 1; text-align: center; padding: 8px; cursor: pointer; font-weight: bold; color: #666; }
+    .auth-tab.active { color: #0d6efd; border-bottom: 2px solid #0d6efd; }
+
     .lista-eventos-modal { max-height: 200px; overflow-y: auto; margin-bottom: 15px; padding: 0; list-style: none; border: 1px solid #eee; border-radius: 4px; }
     .lista-eventos-modal li { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 14px; }
     .lista-eventos-modal li:last-child { border-bottom: none; }
     .btn-sm-action { background: transparent; border: none; cursor: pointer; font-size: 15px; margin-left: 6px; padding: 2px 4px; }
-    .btn-sm-action:hover { transform: scale(1.2); }
 
     #toast { display: none; position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 6px; z-index: 10001; font-weight: bold; }
   </style>
@@ -78,16 +83,11 @@
 <body>
 
   <header>
-    <div class="user-info">
-      👤 marcos.angelo@ifal.edu.br <span class="badge-admin">ADMINISTRADOR</span>
-      <span id="badgeEventoAtivo" class="evento-ativo-badge">📍 Evento: Nenhum</span>
+    <div class="user-info" id="userInfoDisplay">
+      <!-- Preenchido via JavaScript -->
     </div>
-    <div class="actions">
-      <button class="btn btn-purple" onclick="abrirModalEventos()">📅 Eventos (Admin)</button>
-      <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
-      <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
-      <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
-      <button class="btn btn-red" onclick="sair()">Sair</button>
+    <div class="actions" id="headerActionsDisplay">
+      <!-- Preenchido via JavaScript -->
     </div>
   </header>
 
@@ -137,6 +137,37 @@
     </div>
   </div>
 
+  <!-- Modal Unificada de Login e Cadastro -->
+  <div id="modalAuth" class="modal-overlay">
+    <div class="modal-content">
+      <div class="auth-tabs">
+        <div id="tabLogin" class="auth-tab active" onclick="alternarAbaAuth('login')">Login</div>
+        <div id="tabCadastro" class="auth-tab" onclick="alternarAbaAuth('cadastro')">Novo Cadastro</div>
+      </div>
+
+      <!-- Formulário de Login -->
+      <div id="formLogin">
+        <input type="email" id="loginEmailInput" placeholder="Seu E-mail...">
+        <input type="password" id="loginSenhaInput" placeholder="Sua Senha..." onkeyup="if(event.key==='Enter') executarLogin()">
+        <div class="modal-buttons">
+          <button class="btn btn-red" onclick="fecharModal('modalAuth')">Cancelar</button>
+          <button class="btn btn-green" onclick="executarLogin()">Entrar</button>
+        </div>
+      </div>
+
+      <!-- Formulário de Cadastro -->
+      <div id="formCadastro" style="display:none;">
+        <input type="text" id="cadNomeInput" placeholder="Seu Nome...">
+        <input type="email" id="cadEmailInput" placeholder="Seu E-mail...">
+        <input type="password" id="cadSenhaInput" placeholder="Crie uma Senha...">
+        <div class="modal-buttons">
+          <button class="btn btn-red" onclick="fecharModal('modalAuth')">Cancelar</button>
+          <button class="btn btn-purple" onclick="executarCadastro()">Cadastrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal de Seleção de Evento -->
   <div id="modalEscolherEvento" class="modal-overlay">
     <div class="modal-content">
@@ -152,7 +183,7 @@
   <!-- Modal do Administrador para Cadastrar/Gerenciar Eventos -->
   <div id="modalGerenciarEvento" class="modal-overlay">
     <div class="modal-content">
-      <h3>📅 Gerenciar Eventos</h3>
+      <h3>📅 Gerenciar Eventos (Admin)</h3>
       <p style="font-size:13px; margin-bottom:8px; font-weight:bold;">Novo Evento:</p>
       <div style="display:flex; gap:6px; margin-bottom:15px;">
         <input type="text" id="novoEventoInput" placeholder="Nome do evento..." style="margin-bottom:0;">
@@ -172,12 +203,18 @@
 
   <script>
     const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
+    const EMAIL_ADMINISTRADOR = 'marcos.angelo@ifal.edu.br';
 
     let repertorioOriginal = [];
     let dadosFiltrados = [];
+    
+    // Usuários e Sessão
+    let usuariosCadastrados = JSON.parse(localStorage.getItem('rock_users') || '[]');
+    let usuarioLogado = JSON.parse(sessionStorage.getItem('rock_logged_user') || 'null');
+
+    // Dados de Interação
     let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
     let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
-    
     let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
     let indicacoesPorEvento = JSON.parse(localStorage.getItem('rock_indicacoes') || '{}');
     let eventoAtualSessao = sessionStorage.getItem('rock_evento_atual') || '';
@@ -199,12 +236,128 @@
       window.open(window.location.href, '_blank');
     }
 
+    // --- GERENCIAMENTO DE CADASTRO / LOGIN ---
+    function alternarAbaAuth(aba) {
+      if (aba === 'login') {
+        document.getElementById('tabLogin').classList.add('active');
+        document.getElementById('tabCadastro').classList.remove('active');
+        document.getElementById('formLogin').style.display = 'block';
+        document.getElementById('formCadastro').style.display = 'none';
+      } else {
+        document.getElementById('tabCadastro').classList.add('active');
+        document.getElementById('tabLogin').classList.remove('active');
+        document.getElementById('formCadastro').style.display = 'block';
+        document.getElementById('formLogin').style.display = 'none';
+      }
+    }
+
+    function executarCadastro() {
+      const nome = document.getElementById('cadNomeInput').value.trim();
+      const email = document.getElementById('cadEmailInput').value.trim().toLowerCase();
+      const senha = document.getElementById('cadSenhaInput').value;
+
+      if (!nome || !email || !senha) {
+        mostrarToast('Preencha todos os campos para se cadastrar!');
+        return;
+      }
+
+      if (usuariosCadastrados.some(u => u.email === email)) {
+        mostrarToast('Este e-mail já está cadastrado! Faça login.');
+        alternarAbaAuth('login');
+        return;
+      }
+
+      const novoUsuario = { nome, email, senha };
+      usuariosCadastrados.push(novoUsuario);
+      localStorage.setItem('rock_users', JSON.stringify(usuariosCadastrados));
+
+      // Loga automaticamente após cadastrar
+      efetuarLoginSessao(novoUsuario);
+      fecharModal('modalAuth');
+      mostrarToast(`Conta criada com sucesso! Bem-vindo, ${nome}!`);
+    }
+
+    function executarLogin() {
+      const email = document.getElementById('loginEmailInput').value.trim().toLowerCase();
+      const senha = document.getElementById('loginSenhaInput').value;
+
+      if (!email || !senha) {
+        mostrarToast('Digite seu e-mail e senha!');
+        return;
+      }
+
+      const user = usuariosCadastrados.find(u => u.email === email && u.senha === senha);
+      if (user) {
+        efetuarLoginSessao(user);
+        fecharModal('modalAuth');
+        mostrarToast(`Login efetuado com sucesso!`);
+      } else {
+        mostrarToast('E-mail ou senha incorretos!');
+      }
+    }
+
+    function efetuarLoginSessao(user) {
+      const isAdmin = user.email === EMAIL_ADMINISTRADOR;
+      usuarioLogado = { ...user, isAdmin };
+      sessionStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
+      atualizarInterfaceUsuario();
+      filtrarData();
+    }
+
+    function efetuarLogout() {
+      usuarioLogado = null;
+      sessionStorage.removeItem('rock_logged_user');
+      atualizarInterfaceUsuario();
+      filtrarData();
+      mostrarToast('Você saiu da sua conta.');
+    }
+
+    function atualizarInterfaceUsuario() {
+      const infoContainer = document.getElementById('userInfoDisplay');
+      const actionsContainer = document.getElementById('headerActionsDisplay');
+
+      if (usuarioLogado) {
+        const badge = usuarioLogado.isAdmin 
+          ? '<span class="badge-admin">ADMINISTRADOR</span>' 
+          : '<span class="badge-membro">MEMBRO</span>';
+
+        infoContainer.innerHTML = `
+          👤 ${usuarioLogado.nome} (${usuarioLogado.email}) ${badge}
+          <span id="badgeEventoAtivo" class="evento-ativo-badge">📍 Evento: Nenhum</span>
+        `;
+
+        let botoesAdmin = usuarioLogado.isAdmin 
+          ? `<button class="btn btn-purple" onclick="abrirModalEventos()">📅 Eventos (Admin)</button>` 
+          : '';
+
+        actionsContainer.innerHTML = `
+          ${botoesAdmin}
+          <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
+          <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
+          <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
+          <button class="btn btn-red" onclick="efetuarLogout()">🚪 Sair</button>
+        `;
+      } else {
+        infoContainer.innerHTML = `
+          👤 Visitante <span class="badge-visitante">NÃO LOGADO</span>
+          <span id="badgeEventoAtivo" class="evento-ativo-badge">📍 Evento: Nenhum</span>
+        `;
+        actionsContainer.innerHTML = `
+          <button class="btn btn-purple" onclick="abrirModal('modalAuth')">🔑 Entrar / Cadastrar</button>
+          <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
+          <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
+          <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
+        `;
+      }
+      atualizarBadgeEvento();
+    }
+
+    // --- GERENCIAMENTO DE EVENTOS ---
     function inicializarEventos() {
+      atualizarInterfaceUsuario();
       if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
         renderizarBotoesEscolhaEvento();
         abrirModal('modalEscolherEvento');
-      } else if (eventoAtualSessao) {
-        atualizarBadgeEvento();
       }
     }
 
@@ -235,15 +388,21 @@
 
     function atualizarBadgeEvento() {
       const badge = document.getElementById('badgeEventoAtivo');
-      if (eventoAtualSessao) {
-        badge.style.display = 'inline-block';
-        badge.textContent = `📍 Evento: ${eventoAtualSessao}`;
-      } else {
-        badge.style.display = 'none';
+      if (badge) {
+        if (eventoAtualSessao) {
+          badge.style.display = 'inline-block';
+          badge.textContent = `📍 Evento: ${eventoAtualSessao}`;
+        } else {
+          badge.style.display = 'none';
+        }
       }
     }
 
     function abrirModalEventos() {
+      if (!usuarioLogado || !usuarioLogado.isAdmin) {
+        mostrarToast('Apenas o Administrador pode acessar esta área.');
+        return;
+      }
       renderizarListaEventosAdmin();
       document.getElementById('novoEventoInput').value = '';
       abrirModal('modalGerenciarEvento');
@@ -282,7 +441,6 @@
         eventosCadastrados.push(novo);
         localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
         
-        // Ativa automaticamente o novo evento cadastrado
         eventoAtualSessao = novo;
         sessionStorage.setItem('rock_evento_atual', novo);
         
@@ -347,6 +505,7 @@
       }
     }
 
+    // --- CARREGAMENTO E FILTROS DO REPERTÓRIO ---
     function carregarPlanilha() {
       Papa.parse(PLANILHA_CSV_URL, {
         download: true, header: true, skipEmptyLines: true,
@@ -493,7 +652,17 @@
       }
     }
 
+    function checarAutenticacao() {
+      if (!usuarioLogado) {
+        mostrarToast('Faça login para interagir!');
+        abrirModal('modalAuth');
+        return false;
+      }
+      return true;
+    }
+
     function toggleFavorito(id) {
+      if (!checarAutenticacao()) return;
       const idx = favoritos.indexOf(id);
       if (idx > -1) favoritos.splice(idx, 1); else favoritos.push(id);
       localStorage.setItem('rock_favs', JSON.stringify(favoritos));
@@ -501,15 +670,17 @@
     }
 
     function toggleLike(id) {
+      if (!checarAutenticacao()) return;
       if (likesLocais[id]) delete likesLocais[id]; else likesLocais[id] = true;
       localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
       filtrarData();
     }
 
     function toggleIndicacao(id) {
+      if (!checarAutenticacao()) return;
       if (!eventoAtualSessao) {
-        mostrarToast('Selecione um evento primeiro em 📅 Eventos!');
-        abrirModalEventos();
+        mostrarToast('Selecione um evento primeiro para poder indicar músicas!');
+        if(eventosCadastrados.length > 0) abrirModal('modalEscolherEvento');
         return;
       }
       if (!indicacoesPorEvento[eventoAtualSessao]) indicacoesPorEvento[eventoAtualSessao] = [];
@@ -522,6 +693,7 @@
     }
 
     function toggleErro(id) {
+      if (!checarAutenticacao()) return;
       const item = repertorioOriginal.find(m => m.id === id);
       if (item) {
         item.temErro = !item.temErro;
@@ -581,13 +753,8 @@
 
       mostrarToast('Planilha Excel exportada com sucesso!');
     }
-    
-    function sair() { 
-      sessionStorage.removeItem('rock_evento_atual');
-      mostrarToast('Sessão encerrada!');
-      setTimeout(() => location.reload(), 1000);
-    }
 
+    // Inicialização
     inicializarEventos();
     carregarPlanilha();
   </script>
