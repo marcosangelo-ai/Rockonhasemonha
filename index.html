@@ -7,7 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-    body { background-color: #f4f6f9; color: #333; padding: 12px; }
+    body { background-color: #f4f6f9; color: #333; padding: 12px; overflow-x: hidden; }
     
     header {
       background-color: #212529; color: #fff; padding: 10px 16px;
@@ -31,8 +31,18 @@
       width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #ced4da; border-radius: 6px; background: white;
     }
 
-    .table-container { overflow-x: auto; background: white; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    /* CORREÇÃO DA BARRA HORIZONTAL AQUI */
+    .table-container { 
+      width: 100%;
+      max-width: calc(100vw - 24px); /* Impede a div de vazar da tela e força a rolagem */
+      overflow-x: auto; 
+      -webkit-overflow-scrolling: touch; /* Rolagem suave no celular */
+      background: white; 
+      border-radius: 6px; 
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08); 
+    }
+    
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 900px; /* Garante que a tabela tenha um tamanho mínimo para rolar */ }
     
     thead { background-color: #212529; color: white; }
     thead tr.titles th { padding: 10px 8px 4px 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
@@ -177,7 +187,7 @@
         eventosCadastrados.push(acao.trim());
         localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
         alert('Evento cadastrado com sucesso!');
-        location.reload(); // Recarrega para aplicar a seleção
+        location.reload();
       }
     }
 
@@ -249,7 +259,6 @@
         const hasLike = !!likesLocais[item.id];
         const totalLikes = item.likes + (hasLike ? 1 : 0);
         
-        // Verifica se a música está indicada para o evento atual
         const listaIndicacoes = indicacoesPorEvento[eventoAtualSessao] || [];
         const isIndicado = listaIndicacoes.includes(item.id);
 
@@ -328,13 +337,12 @@
       const lista = indicacoesPorEvento[eventoAtualSessao];
       const idx = lista.indexOf(id);
       
-      if (idx > -1) lista.splice(idx, 1); // Desmarca
-      else lista.push(id); // Marca
+      if (idx > -1) lista.splice(idx, 1);
+      else lista.push(id);
       
       localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
-      filtrarData(); // Atualiza a tela
+      filtrarData();
 
-      // Envia para o Apps Script (Se desejar consolidar na planilha)
       if (SCRIPT_API_URL) {
         fetch(`${SCRIPT_API_URL}?id=${id}&action=indicacao&evento=${encodeURIComponent(eventoAtualSessao)}&estado=${idx > -1 ? 'remover' : 'adicionar'}`, { mode: 'no-cors' });
       }
@@ -343,11 +351,9 @@
     function toggleErro(id) {
       const item = repertorioOriginal.find(m => m.id === id);
       if (item) {
-        // Inverte o estado local imediatamente
         item.temErro = !item.temErro;
-        filtrarData(); // Atualiza a tabela na mesma hora (bolinha vermelha)
+        filtrarData(); 
 
-        // Envia direto para a planilha (sem o pop-up)
         if (SCRIPT_API_URL) {
           fetch(`${SCRIPT_API_URL}?id=${id}&action=erro&estado=${item.temErro}`, { mode: 'no-cors' });
         }
@@ -394,24 +400,29 @@
       renderizarTabela(filtrados);
     }
 
+    /* CORREÇÃO DA TELA CHEIA AQUI */
     function toggleTelaCheia() {
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        const el = document.documentElement;
-        if (el.requestFullscreen) {
-          el.requestFullscreen();
-        } else if (el.webkitRequestFullscreen) {
-          el.webkitRequestFullscreen();
-        } else if (el.msRequestFullscreen) {
-          el.msRequestFullscreen();
+      const el = document.documentElement;
+      try {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+          if (el.requestFullscreen) {
+            el.requestFullscreen().catch(err => alert("O navegador bloqueou a tela cheia. DICA: Se você estiver usando pelo Google Sites ou painel, abra o aplicativo em uma nova guia para funcionar."));
+          } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen();
+          } else if (el.msRequestFullscreen) {
+            el.msRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
         }
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) {
-          document.msExitFullscreen();
-        }
+      } catch (e) {
+        alert("O modo tela cheia não é suportado pelo seu navegador atual.");
       }
     }
 
