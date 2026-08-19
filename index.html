@@ -75,15 +75,6 @@
     .modal-content h3 { margin-bottom: 15px; font-size: 18px; }
     .modal-content input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
     .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
-    
-    /* Overlay de Exigência da Tela Cheia */
-    #overlayTelaCheia {
-      display: none;
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: #121212; color: white; z-index: 99999;
-      flex-direction: column; justify-content: center; align-items: center;
-      text-align: center; padding: 20px;
-    }
 
     .auth-tabs { display: flex; border-bottom: 2px solid #dee2e6; margin-bottom: 15px; }
     .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-weight: bold; color: #6c757d; }
@@ -99,17 +90,6 @@
   </style>
 </head>
 <body>
-
-  <!-- Tela de Bloqueio se não estiver em Tela Cheia -->
-  <div id="overlayTelaCheia">
-    <h2>⛶ Modo Tela Cheia Requerido</h2>
-    <p style="margin: 15px 0 25px 0; color: #ccc; max-width: 400px; line-height: 1.5;">
-      Para garantir a melhor experiência de uso e integridade visual do repertório, é necessário utilizar o sistema em Tela Cheia.
-    </p>
-    <button class="btn btn-green" style="padding: 14px 28px; font-size: 16px;" onclick="forcarEntradaTelaCheia()">
-      🚀 Ativar Tela Cheia para Continuar
-    </button>
-  </div>
 
   <header>
     <div class="user-info" id="userInfoDisplay">
@@ -179,7 +159,7 @@
         <input type="email" id="loginEmailInput" placeholder="Seu E-mail...">
         <input type="password" id="loginSenhaInput" placeholder="Sua Senha..." onkeyup="if(event.key==='Enter') executarLogin()">
         <div class="modal-buttons">
-          <button class="btn btn-green" style="width: 100%; padding: 12px;" onclick="executarLogin()">Entrar em Tela Cheia ⛶</button>
+          <button class="btn btn-green" style="width: 100%; padding: 12px;" onclick="executarLogin()">🚀 Entrar e Expandir</button>
         </div>
       </div>
 
@@ -189,7 +169,7 @@
         <input type="email" id="cadEmailInput" placeholder="Seu E-mail...">
         <input type="password" id="cadSenhaInput" placeholder="Crie uma Senha...">
         <div class="modal-buttons">
-          <button class="btn btn-purple" style="width: 100%; padding: 12px;" onclick="executarCadastro()">Cadastrar e Entrar ⛶</button>
+          <button class="btn btn-purple" style="width: 100%; padding: 12px;" onclick="executarCadastro()">🚀 Cadastrar e Expandir</button>
         </div>
       </div>
     </div>
@@ -207,7 +187,7 @@
     </div>
   </div>
 
-  <!-- Modal do Administrador para Cadastrar/Gerenciar Eventos -->
+  <!-- Modal do Administrador -->
   <div id="modalGerenciarEvento" class="modal-overlay">
     <div class="modal-content">
       <h3>📅 Gerenciar Eventos</h3>
@@ -257,9 +237,13 @@
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    // --- CONTROLE RÍGIDO DE TELA CHEIA ---
-    function estaEmTelaCheia() {
-      return !!(document.fullscreenElement || document.webkitFullscreenElement);
+    // --- MANIPULAÇÃO DE TELA CHEIA E EMBED ---
+    function estaEmIframe() {
+      try {
+        return window.self !== window.top;
+      } catch (e) {
+        return true;
+      }
     }
 
     function forcarEntradaTelaCheia() {
@@ -271,20 +255,17 @@
       }
     }
 
-    function verificarStatusTelaCheia() {
-      const overlay = document.getElementById('overlayTelaCheia');
-      if (usuarioLogado && !estaEmTelaCheia()) {
-        overlay.style.display = 'flex';
-      } else {
-        overlay.style.display = 'none';
+    function dispararTelaCheiaEModo() {
+      // Tenta acionar tela cheia imediatamente
+      forcarEntradaTelaCheia();
+
+      // Se estiver incorporado dentro do Google Sites, abre em uma nova aba simultaneamente
+      if (estaEmIframe()) {
+        window.open(window.location.href, '_blank');
       }
     }
 
-    // Monitora mudanças no modo de Tela Cheia em tempo real
-    document.addEventListener('fullscreenchange', verificarStatusTelaCheia);
-    document.addEventListener('webkitfullscreenchange', verificarStatusTelaCheia);
-
-    // --- FAVORITOS INDIVIDUAIS POR CONTA ---
+    // --- FAVORITOS INDIVIDUAIS ---
     function obterChaveFavoritos() {
       if (usuarioLogado && usuarioLogado.email) {
         return 'rock_favs_' + usuarioLogado.email;
@@ -318,12 +299,12 @@
       const senha = document.getElementById('cadSenhaInput').value;
 
       if (!nome || !email || !senha) {
-        mostrarToast('Preencha todos os campos para se cadastrar!');
+        mostrarToast('Preencha todos os campos!');
         return;
       }
 
       if (usuariosCadastrados.some(u => u.email === email)) {
-        mostrarToast('Este e-mail já está cadastrado! Faça login.');
+        mostrarToast('E-mail já cadastrado!');
         alternarAbaAuth('login');
         return;
       }
@@ -332,12 +313,9 @@
       usuariosCadastrados.push(novoUsuario);
       localStorage.setItem('rock_users', JSON.stringify(usuariosCadastrados));
 
-      // Dispara o pedido de Tela Cheia no evento do clique
-      forcarEntradaTelaCheia();
-
+      dispararTelaCheiaEModo();
       efetuarLoginSessao(novoUsuario);
       fecharModal('modalAuth');
-      mostrarToast(`Conta criada com sucesso! Bem-vindo, ${nome}!`);
     }
 
     function executarLogin() {
@@ -345,18 +323,15 @@
       const senha = document.getElementById('loginSenhaInput').value;
 
       if (!email || !senha) {
-        mostrarToast('Digite seu e-mail e senha!');
+        mostrarToast('Digite e-mail e senha!');
         return;
       }
 
       const user = usuariosCadastrados.find(u => u.email === email && u.senha === senha);
       if (user) {
-        // Dispara o pedido de Tela Cheia no evento do clique
-        forcarEntradaTelaCheia();
-
+        dispararTelaCheiaEModo();
         efetuarLoginSessao(user);
         fecharModal('modalAuth');
-        mostrarToast(`Login efetuado com sucesso!`);
       } else {
         mostrarToast('E-mail ou senha incorretos!');
       }
@@ -369,7 +344,6 @@
       
       carregarFavoritosUsuario();
       atualizarInterfaceUsuario();
-      verificarStatusTelaCheia();
       
       if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
         renderizarBotoesEscolhaEvento();
@@ -389,9 +363,8 @@
       
       carregarFavoritosUsuario();
       atualizarInterfaceUsuario();
-      verificarStatusTelaCheia();
       filtrarData();
-      mostrarToast('Você saiu da sua conta.');
+      mostrarToast('Você saiu.');
     }
 
     function atualizarInterfaceUsuario() {
@@ -420,6 +393,7 @@
 
       actionsContainer.innerHTML = `
         ${botoesAdmin}
+        <button class="btn btn-green" onclick="forcarEntradaTelaCheia()">⛶ Tela Cheia</button>
         <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
         <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
         <button class="btn btn-red" onclick="efetuarLogout()">🚪 Sair</button>
@@ -428,7 +402,7 @@
       atualizarBadgeEvento();
     }
 
-    // --- GERENCIAMENTO DE EVENTOS ---
+    // --- EVENTOS ---
     function inicializarEventos() {
       if (eventosCadastrados.length > 0 && !eventoAtualSessao && usuarioLogado) {
         renderizarBotoesEscolhaEvento();
@@ -442,7 +416,7 @@
       const divBotoes = document.getElementById('listaEventosBotoes');
       divBotoes.innerHTML = '';
       if(eventosCadastrados.length === 0) {
-        divBotoes.innerHTML = '<p style="font-size:13px; color:#666;">Nenhum evento cadastrado no momento.</p>';
+        divBotoes.innerHTML = '<p style="font-size:13px; color:#666;">Nenhum evento cadastrado.</p>';
         return;
       }
       eventosCadastrados.forEach(ev => {
@@ -485,7 +459,7 @@
       const ul = document.getElementById('listaEventosAdmin');
       ul.innerHTML = '';
       if(eventosCadastrados.length === 0) {
-        ul.innerHTML = '<li style="font-size:13px; color:#666; justify-content:center;">Nenhum evento registrado.</li>';
+        ul.innerHTML = '<li style="font-size:13px; color:#666; justify-content:center;">Nenhum evento.</li>';
       } else {
         eventosCadastrados.forEach((ev, idx) => {
           let li = document.createElement('li');
@@ -493,9 +467,9 @@
           li.innerHTML = `
             <span><b>${ev}</b> ${isAtivo ? '⭐ (Ativo)' : ''}</span>
             <div>
-              <button class="btn-sm-action" onclick="selecionarEventoAtivo('${ev}')" title="Ativar este Evento">📌</button>
-              <button class="btn-sm-action" onclick="editarEvento(${idx})" title="Editar Nome">✏️</button>
-              <button class="btn-sm-action" onclick="excluirEvento(${idx})" title="Excluir Evento">🗑️</button>
+              <button class="btn-sm-action" onclick="selecionarEventoAtivo('${ev}')" title="Ativar">📌</button>
+              <button class="btn-sm-action" onclick="editarEvento(${idx})" title="Editar">✏️</button>
+              <button class="btn-sm-action" onclick="excluirEvento(${idx})" title="Excluir">🗑️</button>
             </div>
           `;
           ul.appendChild(li);
@@ -508,7 +482,7 @@
       const novo = input.value.trim();
       if(novo) {
         if(eventosCadastrados.includes(novo)) {
-          mostrarToast('Este evento já existe!');
+          mostrarToast('Evento já existe!');
           return;
         }
         eventosCadastrados.push(novo);
@@ -522,13 +496,13 @@
         renderizarListaEventosAdmin();
         renderizarBotoesEscolhaEvento();
         filtrarData();
-        mostrarToast('Novo evento cadastrado e ativado!');
+        mostrarToast('Novo evento cadastrado!');
       }
     }
 
     function editarEvento(index) {
       const antigoNome = eventosCadastrados[index];
-      const novoNome = prompt('Digite o novo nome para o evento:', antigoNome);
+      const novoNome = prompt('Digite o novo nome:', antigoNome);
       
       if (novoNome && novoNome.trim() !== '' && novoNome.trim() !== antigoNome) {
         const nomeFormatado = novoNome.trim();
@@ -550,13 +524,13 @@
         renderizarListaEventosAdmin();
         renderizarBotoesEscolhaEvento();
         filtrarData();
-        mostrarToast('Evento renomeado!');
+        mostrarToast('Evento alterado!');
       }
     }
 
     function excluirEvento(index) {
       const nomeEv = eventosCadastrados[index];
-      if (confirm(`Tem certeza que deseja excluir o evento "${nomeEv}"?`)) {
+      if (confirm(`Deseja excluir o evento "${nomeEv}"?`)) {
         eventosCadastrados.splice(index, 1);
         
         if (indicacoesPorEvento[nomeEv]) {
@@ -578,7 +552,7 @@
       }
     }
 
-    // --- CARREGAMENTO E FILTROS DE DADOS ---
+    // --- CARREGAMENTO E DADOS ---
     function carregarPlanilha() {
       Papa.parse(PLANILHA_CSV_URL, {
         download: true, header: true, skipEmptyLines: true,
@@ -726,7 +700,7 @@
       }
     }
 
-    // --- AÇÕES DA TABELA ---
+    // --- MANIPULAÇÃO DE AÇÕES DA TABELA ---
     function toggleFavorito(id) {
       const chave = obterChaveFavoritos();
       const idx = favoritos.indexOf(id);
@@ -802,7 +776,6 @@
       carregarPlanilha();
       atualizarInterfaceUsuario();
       inicializarEventos();
-      verificarStatusTelaCheia();
     };
   </script>
 </body>
