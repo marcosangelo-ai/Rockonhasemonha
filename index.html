@@ -12,6 +12,13 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
     body { background-color: #f4f6f9; color: #333; padding: 12px; overflow-x: hidden; }
     
+    /* Suporte a Tela Cheia Nativa Mantendo o Estilo */
+    :fullscreen, :-webkit-full-screen {
+      background-color: #f4f6f9;
+      padding: 12px;
+      overflow-y: auto;
+    }
+
     header {
       background-color: #212529; color: #fff; padding: 10px 16px;
       display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
@@ -230,8 +237,24 @@
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    function abrirEmNovaAba() {
-      window.open(window.location.href, '_blank');
+    // --- FUNÇÃO CORRIGIDA: TELA CHEIA NATIVA (MANTÉM SESSÃO E DADOS) ---
+    function alternarTelaCheia() {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen();
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        }
+        mostrarToast('Modo Tela Cheia Ativado');
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+        mostrarToast('Modo Normal Ativado');
+      }
     }
 
     // --- GERENCIAMENTO DE CADASTRO / LOGIN ---
@@ -344,7 +367,7 @@
         ${botoesAdmin}
         <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
         <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
-        <button class="btn btn-green" onclick="abrirEmNovaAba()">↗️ Tela Cheia</button>
+        <button class="btn btn-green" onclick="alternarTelaCheia()">⛶ Tela Cheia</button>
         <button class="btn btn-red" onclick="efetuarLogout()">🚪 Sair</button>
       `;
       
@@ -685,64 +708,37 @@
     }
 
     function toggleDarkMode() { 
-      document.body.style.filter = document.body.style.filter ? '' : 'invert(0.9) hue-rotate(180deg)'; 
-    }
-    
-    function exportarPlanilha() {
-      if (!dadosFiltrados || dadosFiltrados.length === 0) {
-        mostrarToast('Nenhuma música encontrada para exportar!');
-        return;
+      if (document.body.style.filter === 'invert(0.9) hue-rotate(180deg)') {
+        document.body.style.filter = 'none';
+      } else {
+        document.body.style.filter = 'invert(0.9) hue-rotate(180deg)';
       }
+    }
 
-      const dadosExportacao = dadosFiltrados.map(r => {
-        const isFav = favoritos.includes(r.id);
-        const hasLike = !!likesLocais[r.id];
-        const isIndicado = (indicacoesPorEvento[eventoAtualSessao] || []).includes(r.id);
-
-        return {
-          'Nº': r.num,
-          'ESTILO': r.estilo,
-          'BANDA / ARTISTA': r.banda,
-          'MÚSICA': r.musica,
-          'TOM': r.tom || '-',
-          'CIFRA': r.cifra && r.cifra !== '#' ? r.cifra : '-',
-          'MEU (FAV)': isFav ? 'Sim' : 'Não',
-          'LIKES': r.likes + (hasLike ? 1 : 0),
-          'ACESSOS': r.acessos,
-          'INDICAÇÃO': isIndicado ? 'Sim' : 'Não',
-          'ERRO': r.temErro ? 'Sim' : 'Não'
-        };
-      });
-
+    function exportarPlanilha() {
+      const dadosExportacao = dadosFiltrados.map(item => ({
+        'Nº': item.num,
+        'Estilo': item.estilo,
+        'Banda / Artista': item.banda,
+        'Música': item.musica,
+        'Tom': item.tom,
+        'Likes': item.likes + (likesLocais[item.id] ? 1 : 0),
+        'Acessos': item.acessos,
+        'Indicado': (indicacoesPorEvento[eventoAtualSessao] || []).includes(item.id) ? 'Sim' : 'Não',
+        'Com Erro': item.temErro ? 'Sim' : 'Não'
+      }));
       const ws = XLSX.utils.json_to_sheet(dadosExportacao);
-
-      ws['!cols'] = [
-        { wch: 6 },  // Nº
-        { wch: 22 }, // ESTILO
-        { wch: 25 }, // BANDA / ARTISTA
-        { wch: 32 }, // MÚSICA
-        { wch: 8 },  // TOM
-        { wch: 45 }, // CIFRA
-        { wch: 12 }, // MEU (FAV)
-        { wch: 8 },  // LIKES
-        { wch: 10 }, // ACESSOS
-        { wch: 12 }, // INDICAÇÃO
-        { wch: 8 }   // ERRO
-      ];
-
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Repertório");
-      XLSX.writeFile(wb, 'repertorio_rockonha.xlsx');
-
-      mostrarToast('Planilha Excel exportada com sucesso!');
+      XLSX.writeFile(wb, "repertorio_rockonhasemonha.xlsx");
     }
 
-    // Inicialização do sistema
-    atualizarInterfaceUsuario();
-    if (usuarioLogado) {
+    // Inicialização da Página
+    window.onload = function() {
+      carregarPlanilha();
+      atualizarInterfaceUsuario();
       inicializarEventos();
-    }
-    carregarPlanilha();
+    };
   </script>
 </body>
 </html>
