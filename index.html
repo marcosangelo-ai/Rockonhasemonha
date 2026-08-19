@@ -8,6 +8,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <!-- Gerador de Planilhas Estruturadas em Excel (.XLSX) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <!-- Firebase SDKs (Nuvem em Tempo Real) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
     body { background-color: #f4f6f9; color: #333; padding: 12px; overflow-x: hidden; }
@@ -92,12 +97,8 @@
 <body>
 
   <header>
-    <div class="user-info" id="userInfoDisplay">
-      <!-- Preenchido via JavaScript -->
-    </div>
-    <div class="actions" id="headerActionsDisplay">
-      <!-- Preenchido via JavaScript -->
-    </div>
+    <div class="user-info" id="userInfoDisplay"></div>
+    <div class="actions" id="headerActionsDisplay"></div>
   </header>
 
   <div class="search-bar">
@@ -209,8 +210,23 @@
   <div id="toast">Mensagem</div>
 
   <script>
+    // --- CONFIGURAÇÃO FIREBASE NUVEM ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCj-LfsWo7C1x4QipIQl0jB1idHtYt0_28",
+      authDomain: "roconha-sem-onha-2026.firebaseapp.com",
+      databaseURL: "https://roconha-sem-onha-2026-default-rtdb.firebaseio.com",
+      projectId: "roconha-sem-onha-2026",
+      storageBucket: "roconha-sem-onha-2026.firebasestorage.app",
+      messagingSenderId: "502573184690",
+      appId: "1:502573184690:web:ad8b7ac9ad170897953bab",
+      measurementId: "G-PBR2BS6SGY"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
-    const EMAIL_ADMINISTRADOR = 'marcos.angelo@ifal.edu.br';
+    const EMAILS_ADMINISTRADORES = ['marcos.angelo@ifal.edu.br', 'marcos.angelo83@gmail.com'];
 
     let repertorioOriginal = [];
     let dadosFiltrados = [];
@@ -226,6 +242,49 @@
 
     let paginaAtual = 1;
     const itensPorPagina = 30;
+
+    // --- ESCUTA EM TEMPO REAL COM FIREBASE (SINCRONIZAÇÃO NUVEM) ---
+    function iniciarSincronizacaoNuvem() {
+      // Sincronizar Usuários
+      db.ref('usuarios').on('value', snapshot => {
+        const val = snapshot.val();
+        if (val) {
+          usuariosCadastrados = Array.isArray(val) ? val : Object.values(val);
+          localStorage.setItem('rock_users', JSON.stringify(usuariosCadastrados));
+        }
+      });
+
+      // Sincronizar Eventos
+      db.ref('eventos').on('value', snapshot => {
+        const val = snapshot.val();
+        if (val) {
+          eventosCadastrados = Array.isArray(val) ? val : Object.values(val);
+          localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+          renderizarListaEventosAdmin();
+          renderizarBotoesEscolhaEvento();
+        }
+      });
+
+      // Sincronizar Indicações
+      db.ref('indicacoes').on('value', snapshot => {
+        const val = snapshot.val();
+        if (val) {
+          indicacoesPorEvento = val;
+          localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+          filtrarData();
+        }
+      });
+
+      // Sincronizar Likes
+      db.ref('likes').on('value', snapshot => {
+        const val = snapshot.val();
+        if (val) {
+          likesLocais = val;
+          localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
+          filtrarData();
+        }
+      });
+    }
 
     function mostrarToast(msg) {
       const t = document.getElementById('toast');
@@ -256,10 +315,7 @@
     }
 
     function dispararTelaCheiaEModo() {
-      // Tenta acionar tela cheia imediatamente
       forcarEntradaTelaCheia();
-
-      // Se estiver incorporado dentro do Google Sites, abre em uma nova aba simultaneamente
       if (estaEmIframe()) {
         window.open(window.location.href, '_blank');
       }
@@ -268,7 +324,7 @@
     // --- FAVORITOS INDIVIDUAIS ---
     function obterChaveFavoritos() {
       if (usuarioLogado && usuarioLogado.email) {
-        return 'rock_favs_' + usuarioLogado.email;
+        return 'rock_favs_' + usuarioLogado.email.replace(/[^a-zA-Z0-9]/g, '_');
       }
       return 'rock_favs_guest';
     }
@@ -312,6 +368,7 @@
       const novoUsuario = { nome, email, senha };
       usuariosCadastrados.push(novoUsuario);
       localStorage.setItem('rock_users', JSON.stringify(usuariosCadastrados));
+      db.ref('usuarios').set(usuariosCadastrados);
 
       dispararTelaCheiaEModo();
       efetuarLoginSessao(novoUsuario);
@@ -338,7 +395,7 @@
     }
 
     function efetuarLoginSessao(user) {
-      const isAdmin = user.email === EMAIL_ADMINISTRADOR;
+      const isAdmin = EMAILS_ADMINISTRADORES.includes(user.email);
       usuarioLogado = { ...user, isAdmin };
       sessionStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
       
@@ -487,6 +544,7 @@
         }
         eventosCadastrados.push(novo);
         localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        db.ref('eventos').set(eventosCadastrados);
         
         eventoAtualSessao = novo;
         sessionStorage.setItem('rock_evento_atual', novo);
@@ -512,6 +570,7 @@
           indicacoesPorEvento[nomeFormatado] = indicacoesPorEvento[antigoNome];
           delete indicacoesPorEvento[antigoNome];
           localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+          db.ref('indicacoes').set(indicacoesPorEvento);
         }
         
         if (eventoAtualSessao === antigoNome) {
@@ -521,6 +580,7 @@
         }
         
         localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        db.ref('eventos').set(eventosCadastrados);
         renderizarListaEventosAdmin();
         renderizarBotoesEscolhaEvento();
         filtrarData();
@@ -536,6 +596,7 @@
         if (indicacoesPorEvento[nomeEv]) {
           delete indicacoesPorEvento[nomeEv];
           localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+          db.ref('indicacoes').set(indicacoesPorEvento);
         }
         
         if (eventoAtualSessao === nomeEv) {
@@ -545,6 +606,7 @@
         }
         
         localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        db.ref('eventos').set(eventosCadastrados);
         renderizarListaEventosAdmin();
         renderizarBotoesEscolhaEvento();
         filtrarData();
@@ -712,12 +774,16 @@
       }
 
       localStorage.setItem(chave, JSON.stringify(favoritos));
+      if (usuarioLogado && usuarioLogado.email) {
+        db.ref('favs/' + usuarioLogado.email.replace(/[^a-zA-Z0-9]/g, '_')).set(favoritos);
+      }
       filtrarData();
     }
 
     function toggleLike(id) {
       if (likesLocais[id]) delete likesLocais[id]; else likesLocais[id] = true;
       localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
+      db.ref('likes').set(likesLocais);
       filtrarData();
     }
 
@@ -733,6 +799,7 @@
       if (idx > -1) lista.splice(idx, 1); else lista.push(id);
       
       localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+      db.ref('indicacoes').set(indicacoesPorEvento);
       filtrarData();
     }
 
@@ -772,6 +839,7 @@
 
     // Inicialização da Página
     window.onload = function() {
+      iniciarSincronizacaoNuvem();
       carregarFavoritosUsuario();
       carregarPlanilha();
       atualizarInterfaceUsuario();
