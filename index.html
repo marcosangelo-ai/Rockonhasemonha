@@ -213,7 +213,7 @@
 
     let repertorioOriginal = [];
     let dadosFiltrados = [];
-    let favoritos = JSON.parse(localStorage.getItem('rock_favs') || '[]');
+    let favoritos = []; // Carregado individualmente por usuário
     let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
     
     let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
@@ -237,7 +237,17 @@
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    // --- FUNÇÃO CORRIGIDA: TELA CHEIA NATIVA (MANTÉM SESSÃO E DADOS) ---
+    // --- CARREGAMENTO INDIVIDUAL DE FAVORITOS (POR USUÁRIO) ---
+    function carregarFavoritosUsuario() {
+      if (usuarioLogado && usuarioLogado.email) {
+        const chaveUserFavs = 'rock_favs_' + usuarioLogado.email;
+        favoritos = JSON.parse(localStorage.getItem(chaveUserFavs) || '[]');
+      } else {
+        favoritos = [];
+      }
+    }
+
+    // --- TELA CHEIA NATIVA ---
     function alternarTelaCheia() {
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         const docEl = document.documentElement;
@@ -320,6 +330,10 @@
       const isAdmin = user.email === EMAIL_ADMINISTRADOR;
       usuarioLogado = { ...user, isAdmin };
       sessionStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
+      
+      // Carrega exclusivamente os favoritos deste usuário
+      carregarFavoritosUsuario();
+      
       atualizarInterfaceUsuario();
       
       if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
@@ -335,7 +349,12 @@
       sessionStorage.removeItem('rock_logged_user');
       sessionStorage.removeItem('rock_evento_atual');
       eventoAtualSessao = '';
+      
+      // Limpa os favoritos da tela ao deslogar
+      favoritos = [];
+      
       atualizarInterfaceUsuario();
+      filtrarData();
       mostrarToast('Você saiu da sua conta.');
     }
 
@@ -671,10 +690,24 @@
       }
     }
 
+    // --- FAVORITAR MÚSICA (MEU ❤️ - INDIVIDUAL POR USUÁRIO) ---
     function toggleFavorito(id) {
+      if (!usuarioLogado) {
+        mostrarToast('Faça login para favoritar músicas!');
+        return;
+      }
+
       const idx = favoritos.indexOf(id);
-      if (idx > -1) favoritos.splice(idx, 1); else favoritos.push(id);
-      localStorage.setItem('rock_favs', JSON.stringify(favoritos));
+      if (idx > -1) {
+        favoritos.splice(idx, 1);
+      } else {
+        favoritos.push(id);
+      }
+
+      // Salva no localStorage com a chave individual do e-mail
+      const chaveUserFavs = 'rock_favs_' + usuarioLogado.email;
+      localStorage.setItem(chaveUserFavs, JSON.stringify(favoritos));
+      
       filtrarData();
     }
 
@@ -736,6 +769,7 @@
     // Inicialização da Página
     window.onload = function() {
       carregarPlanilha();
+      carregarFavoritosUsuario(); // Carrega favoritas se usuário já estiver autenticado na sessão
       atualizarInterfaceUsuario();
       inicializarEventos();
     };
