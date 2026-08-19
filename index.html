@@ -65,9 +65,9 @@
 
     .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; font-size: 12px; }
     .btn-cifra { background-color: #dc3545; color: white; text-decoration: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
-    .btn-action { background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 12px; transition: transform 0.1s; }
-    .btn-action:hover { transform: scale(1.2); }
-    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #ced4da; }
+    .btn-action { background: transparent; border: none; cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 12px; transition: transform 0.1s; }
+    .btn-action:hover { transform: scale(1.1); }
+    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #ced4da; cursor: pointer; }
     .pill-like.active { background-color: #ffc107; color: #000; border-color: #ffc107; }
     .pill-acesso { background-color: #0d6efd; color: white; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-block; }
     
@@ -233,13 +233,13 @@
     let dadosFiltrados = [];
     let favoritos = []; 
     let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
+    let errosLocais = JSON.parse(localStorage.getItem('rock_erros') || '{}');
     
     let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
     let indicacoesPorEvento = JSON.parse(localStorage.getItem('rock_indicacoes') || '{}');
     let eventoAtualSessao = sessionStorage.getItem('rock_evento_atual') || '';
 
     let usuariosCadastrados = JSON.parse(localStorage.getItem('rock_users') || '[]');
-    // UTILIZA LOCALSTORAGE PARA MANTER LOGIN ENTRE ABAS
     let usuarioLogado = JSON.parse(localStorage.getItem('rock_logged_user') || 'null');
 
     let paginaAtual = 1;
@@ -279,6 +279,15 @@
         if (val) {
           likesLocais = val;
           localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
+          filtrarData();
+        }
+      });
+
+      db.ref('erros').on('value', snapshot => {
+        const val = snapshot.val();
+        if (val) {
+          errosLocais = val;
+          localStorage.setItem('rock_erros', JSON.stringify(errosLocais));
           filtrarData();
         }
       });
@@ -343,6 +352,16 @@
       localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
       db.ref('likes').set(likesLocais);
       filtrarData();
+    }
+
+    // --- FUNÇÃO DE MARCAR ERRO LIBERADA PARA TODOS OS USUÁRIOS LOGADOS ---
+    function toggleErro(id) {
+      if (!usuarioLogado) { abrirModalAuth(); return; }
+      errosLocais[id] = !errosLocais[id];
+      localStorage.setItem('rock_erros', JSON.stringify(errosLocais));
+      db.ref('erros').set(errosLocais);
+      filtrarData();
+      mostrarToast(errosLocais[id] ? 'Música marcada com erro 🔴' : 'Música marcada como OK 🟢');
     }
 
     function toggleIndicacao(id) {
@@ -417,7 +436,6 @@
       const isAdmin = EMAILS_ADMINISTRADORES.includes(user.email);
       usuarioLogado = { ...user, isAdmin };
       
-      // SALVA NO LOCALSTORAGE PARA MANTER O LOGIN ENTRE ABAS
       localStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
       
       carregarFavoritosUsuario();
@@ -630,7 +648,7 @@
         complete: function(results) {
           repertorioOriginal = results.data.map((item, index) => {
             const erroValor = item['Erro'] || item['ERRO'] || '';
-            const temErro = erroValor.includes('⚠️') || erroValor.includes('🔴') || erroValor.toLowerCase().includes('sim') || erroValor === '1';
+            const temErroCSV = erroValor.includes('⚠️') || erroValor.includes('🔴') || erroValor.toLowerCase().includes('sim') || erroValor === '1';
 
             return {
               id: String(item['Seq.'] || item['Seq'] || (index + 1)),
@@ -642,7 +660,7 @@
               cifra: item['Links das Cifras'] || item['Cifra'] || '#',
               likes: parseInt(item['Likes'] || '0', 10),
               acessos: parseInt(item['Acessos'] || '0', 10),
-              temErro: temErro
+              temErro: temErroCSV
             };
           }).filter(m => m.musica);
 
@@ -691,6 +709,7 @@
         const isFav = favoritos.includes(item.id);
         const hasLike = !!likesLocais[item.id];
         const isIndicado = (indicacoesPorEvento[eventoAtualSessao] || []).includes(item.id);
+        const possuiErro = item.temErro || !!errosLocais[item.id];
 
         const atendeGeral = !busca || String(item.num).toLowerCase().includes(busca) || item.estilo.toLowerCase().includes(busca) || item.banda.toLowerCase().includes(busca) || item.musica.toLowerCase().includes(busca) || item.tom.toLowerCase().includes(busca);
         const atendeNum = !num || String(item.num).toLowerCase().includes(num);
@@ -701,7 +720,7 @@
         const atendeMeu = !meu || (meu === 'fav' && isFav);
         const atendeLikes = !likesFilter || (likesFilter === 'liked' && hasLike);
         const atendeIndicacao = !indicacaoFilter || (indicacaoFilter === 'indicado' && isIndicado);
-        const atendeErro = !erroFilter || (erroFilter === 'erro' && item.temErro);
+        const atendeErro = !erroFilter || (erroFilter === 'erro' && possuiErro);
 
         return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom && atendeMeu && atendeLikes && atendeIndicacao && atendeErro;
       });
@@ -738,6 +757,7 @@
         const isFav = favoritos.includes(item.id);
         const hasLike = !!likesLocais[item.id];
         const isIndicado = (indicacoesPorEvento[eventoAtualSessao] || []).includes(item.id);
+        const possuiErro = item.temErro || !!errosLocais[item.id];
 
         tr.innerHTML = `
           <td><b>${item.num}</b></td>
@@ -760,7 +780,11 @@
               ${isIndicado ? '✅ Indicada' : '📌 Indicar'}
             </button>
           </td>
-          <td>${item.temErro ? '🔴 Erro' : '🟢 OK'}</td>
+          <td>
+            <button class="btn-action" onclick="toggleErro('${item.id}')" title="Clique para sinalizar erro nesta música">
+              ${possuiErro ? '🔴 Erro' : '🟢 OK'}
+            </button>
+          </td>
         `;
         corpo.appendChild(tr);
       });
@@ -781,7 +805,8 @@
         'Cifra': i.cifra,
         'Favorito': favoritos.includes(i.id) ? 'Sim' : 'Não',
         'Curtido': likesLocais[i.id] ? 'Sim' : 'Não',
-        'Indicado no Evento': (indicacoesPorEvento[eventoAtualSessao] || []).includes(i.id) ? 'Sim' : 'Não'
+        'Indicado no Evento': (indicacoesPorEvento[eventoAtualSessao] || []).includes(i.id) ? 'Sim' : 'Não',
+        'Com Erro': (i.temErro || !!errosLocais[i.id]) ? 'Sim' : 'Não'
       }));
 
       const wb = XLSX.utils.book_new();
@@ -797,7 +822,6 @@
       carregarFavoritosUsuario();
       atualizarInterfaceUsuario();
       
-      // Se não estiver em iFrame e não tiver usuário logado, abre modal de login
       if (!estaEmIframe() && !usuarioLogado) {
         abrirModal('modalAuth');
       }
