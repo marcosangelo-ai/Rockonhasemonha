@@ -22,6 +22,8 @@
     body.dark-mode table { color: #e0e0e0; }
     body.dark-mode tbody tr:hover { background-color: #2c2c2c; }
     body.dark-mode .filter-select, body.dark-mode .filter-input, body.dark-mode .search-bar input { background-color: #2b2b2b; color: #fff; border-color: #444; }
+    body.dark-mode #listaUsuariosEvento { background: #2b2b2b !important; border-color: #444 !important; }
+    body.dark-mode #selectAddUsuarioEvento, body.dark-mode select { background-color: #2b2b2b; color: #fff; border-color: #444; }
 
     :fullscreen, :-webkit-full-screen {
       background-color: #f4f6f9; padding: 12px; width: 100vw; height: 100vh; overflow-y: auto;
@@ -181,7 +183,7 @@
   <div id="modalEscolherEvento" class="modal-overlay">
     <div class="modal-content">
       <h3>Selecione um Evento para Hoje</h3>
-      <p style="margin-bottom:12px; font-size:13px; color:#555;">Escolha para qual evento você deseja indicar músicas:</p>
+      <p style="margin-bottom:12px; font-size:13px; color:#555;">Escolha para qual evento você deseja trabalhar:</p>
       <div id="listaEventosBotoes" style="display:flex; flex-direction:column; gap:8px;"></div>
       <div class="modal-buttons">
         <button class="btn btn-red" onclick="fecharModal('modalEscolherEvento')">Ignorar</button>
@@ -204,6 +206,32 @@
 
       <div class="modal-buttons">
         <button class="btn btn-red" onclick="fecharModal('modalGerenciarEvento')">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Edição de Evento e Permissões de Usuários (Admin) -->
+  <div id="modalEditarEvento" class="modal-overlay">
+    <div class="modal-content" style="max-width: 480px;">
+      <h3>⚙️ Editar Evento e Permissões</h3>
+      
+      <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">Nome do Evento:</label>
+      <input type="text" id="editNomeEventoInput" placeholder="Nome do evento...">
+
+      <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">👥 Participantes e Permissões do Evento:</label>
+      <p style="font-size:11px; color:#666; margin-bottom:8px;">Por padrão, usuários entram com 'Apenas Consultar'. Altere abaixo quem pode indicar músicas:</p>
+
+      <div id="listaUsuariosEvento" style="max-height: 180px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 10px; background: #fafafa;"></div>
+
+      <div style="margin-bottom: 15px;">
+        <select id="selectAddUsuarioEvento" style="width:100%; padding:8px; font-size:12px; border:1px solid #ccc; border-radius:4px;" onchange="adicionarUsuarioAoEventoManual()">
+          <option value="">+ Adicionar outro usuário ao evento...</option>
+        </select>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="btn btn-green" onclick="salvarEdicaoEvento()">💾 Salvar</button>
+        <button class="btn btn-red" onclick="fecharModal('modalEditarEvento')">Cancelar</button>
       </div>
     </div>
   </div>
@@ -237,10 +265,14 @@
     
     let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
     let indicacoesPorEvento = JSON.parse(localStorage.getItem('rock_indicacoes') || '{}');
+    let permissoesEventos = JSON.parse(localStorage.getItem('rock_permissoes_eventos') || '{}');
     let eventoAtualSessao = sessionStorage.getItem('rock_evento_atual') || '';
 
     let usuariosCadastrados = JSON.parse(localStorage.getItem('rock_users') || '[]');
     let usuarioLogado = JSON.parse(localStorage.getItem('rock_logged_user') || 'null');
+
+    let eventoEmEdicaoIndex = null;
+    let eventoEmEdicaoNomeOriginal = '';
 
     let paginaAtual = 1;
     const itensPorPagina = 30;
@@ -271,6 +303,14 @@
           indicacoesPorEvento = val;
           localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
           filtrarData();
+        }
+      });
+
+      db.ref('permissoes_eventos').on('value', snapshot => {
+        const val = snapshot.val();
+        if (val) {
+          permissoesEventos = val;
+          localStorage.setItem('rock_permissoes_eventos', JSON.stringify(permissoesEventos));
         }
       });
 
@@ -354,7 +394,6 @@
       filtrarData();
     }
 
-    // --- FUNÇÃO DE MARCAR ERRO LIBERADA PARA TODOS OS USUÁRIOS LOGADOS ---
     function toggleErro(id) {
       if (!usuarioLogado) { abrirModalAuth(); return; }
       errosLocais[id] = !errosLocais[id];
@@ -364,6 +403,20 @@
       mostrarToast(errosLocais[id] ? 'Música marcada com erro 🔴' : 'Música marcada como OK 🟢');
     }
 
+    // --- VERIFICAÇÃO E CADASTRO DE PERMISSÃO POR EVENTO ---
+    function garantirRegistroUsuarioNoEvento(ev) {
+      if (!ev || !usuarioLogado || !usuarioLogado.email) return;
+      if (!permissoesEventos[ev]) {
+        permissoesEventos[ev] = {};
+      }
+      // Se não tem permissão ainda, cadastra com 'consultar' (ou 'indicar' se for Admin)
+      if (!permissoesEventos[ev][usuarioLogado.email]) {
+        permissoesEventos[ev][usuarioLogado.email] = usuarioLogado.isAdmin ? 'indicar' : 'consultar';
+        localStorage.setItem('rock_permissoes_eventos', JSON.stringify(permissoesEventos));
+        db.ref('permissoes_eventos').set(permissoesEventos);
+      }
+    }
+
     function toggleIndicacao(id) {
       if (!usuarioLogado) { abrirModalAuth(); return; }
       if (!eventoAtualSessao) {
@@ -371,6 +424,18 @@
         abrirModal('modalEscolherEvento');
         return;
       }
+
+      garantirRegistroUsuarioNoEvento(eventoAtualSessao);
+
+      // Checa a permissão individual no evento
+      const perm = (permissoesEventos[eventoAtualSessao] && permissoesEventos[eventoAtualSessao][usuarioLogado.email]) 
+                   || (usuarioLogado.isAdmin ? 'indicar' : 'consultar');
+
+      if (perm !== 'indicar' && !usuarioLogado.isAdmin) {
+        mostrarToast('🔒 Você tem permissão apenas para CONSULTAR as músicas deste evento.');
+        return;
+      }
+
       if (!indicacoesPorEvento[eventoAtualSessao]) { indicacoesPorEvento[eventoAtualSessao] = []; }
       const lista = indicacoesPorEvento[eventoAtualSessao];
       const idx = lista.indexOf(id);
@@ -441,6 +506,10 @@
       carregarFavoritosUsuario();
       atualizarInterfaceUsuario();
       
+      if (eventoAtualSessao) {
+        garantirRegistroUsuarioNoEvento(eventoAtualSessao);
+      }
+
       if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
         renderizarBotoesEscolhaEvento();
         abrirModal('modalEscolherEvento');
@@ -516,6 +585,9 @@
     function selecionarEventoAtivo(ev) {
       eventoAtualSessao = ev;
       sessionStorage.setItem('rock_evento_atual', ev);
+      
+      garantirRegistroUsuarioNoEvento(ev);
+
       atualizarBadgeEvento();
       fecharModal('modalEscolherEvento');
       filtrarData();
@@ -553,7 +625,7 @@
             <span><b>${ev}</b> ${isAtivo ? '⭐ (Ativo)' : ''}</span>
             <div>
               <button class="btn-sm-action" onclick="selecionarEventoAtivo('${ev}')" title="Ativar">📌</button>
-              <button class="btn-sm-action" onclick="editarEvento(${idx})" title="Editar">✏️</button>
+              <button class="btn-sm-action" onclick="abrirEditarEvento(${idx})" title="Editar Permissões e Nome">✏️</button>
               <button class="btn-sm-action" onclick="excluirEvento(${idx})" title="Excluir">🗑️</button>
             </div>
           `;
@@ -577,6 +649,8 @@
         eventoAtualSessao = novo;
         sessionStorage.setItem('rock_evento_atual', novo);
         
+        garantirRegistroUsuarioNoEvento(novo);
+
         input.value = '';
         atualizarBadgeEvento();
         renderizarListaEventosAdmin();
@@ -586,34 +660,131 @@
       }
     }
 
-    function editarEvento(index) {
-      const antigoNome = eventosCadastrados[index];
-      const novoNome = prompt('Digite o novo nome:', antigoNome);
+    // --- GERENCIAMENTO AVANÇADO DE EDIÇÃO E PERMISSÕES DO EVENTO ---
+    function abrirEditarEvento(index) {
+      eventoEmEdicaoIndex = index;
+      eventoEmEdicaoNomeOriginal = eventosCadastrados[index];
       
-      if (novoNome && novoNome.trim() !== '' && novoNome.trim() !== antigoNome) {
-        const nomeFormatado = novoNome.trim();
-        eventosCadastrados[index] = nomeFormatado;
+      document.getElementById('editNomeEventoInput').value = eventoEmEdicaoNomeOriginal;
+      renderizarListaUsuariosEdicaoEvento();
+      abrirModal('modalEditarEvento');
+    }
+
+    function renderizarListaUsuariosEdicaoEvento() {
+      const container = document.getElementById('listaUsuariosEvento');
+      container.innerHTML = '';
+
+      const evPerms = permissoesEventos[eventoEmEdicaoNomeOriginal] || {};
+      const emailsInclusos = Object.keys(evPerms);
+
+      if (emailsInclusos.length === 0) {
+        container.innerHTML = '<p style="font-size:12px; color:#777; text-align:center; padding:8px;">Nenhum usuário ingressou neste evento ainda.</p>';
+      } else {
+        emailsInclusos.forEach(email => {
+          const uCad = usuariosCadastrados.find(u => u.email === email);
+          const nomeExibicao = uCad ? `${uCad.nome} (${email})` : email;
+          const permAtual = evPerms[email] || 'consultar';
+
+          const div = document.createElement('div');
+          div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #eee; font-size:12px;';
+          div.innerHTML = `
+            <span style="font-weight:500; word-break:break-all; padding-right:8px;">${nomeExibicao}</span>
+            <select onchange="alterarPermissaoUsuarioEvento('${email}', this.value)" style="padding:4px; font-size:11px; border-radius:4px; border:1px solid #ccc;">
+              <option value="consultar" ${permAtual === 'consultar' ? 'selected' : ''}>👁️ Apenas Consultar</option>
+              <option value="indicar" ${permAtual === 'indicar' ? 'selected' : ''}>✏️ Pode Indicar</option>
+            </select>
+          `;
+          container.appendChild(div);
+        });
+      }
+
+      // Preenche select com usuários que ainda não estão no evento
+      const selectAdd = document.getElementById('selectAddUsuarioEvento');
+      if (selectAdd) {
+        selectAdd.innerHTML = '<option value="">+ Adicionar outro usuário ao evento...</option>';
+        usuariosCadastrados.forEach(u => {
+          if (!emailsInclusos.includes(u.email)) {
+            const opt = document.createElement('option');
+            opt.value = u.email;
+            opt.textContent = `${u.nome} (${u.email})`;
+            selectAdd.appendChild(opt);
+          }
+        });
+      }
+    }
+
+    function adicionarUsuarioAoEventoManual() {
+      const selectAdd = document.getElementById('selectAddUsuarioEvento');
+      const email = selectAdd.value;
+      if (!email) return;
+
+      if (!permissoesEventos[eventoEmEdicaoNomeOriginal]) {
+        permissoesEventos[eventoEmEdicaoNomeOriginal] = {};
+      }
+      permissoesEventos[eventoEmEdicaoNomeOriginal][email] = 'consultar'; // Padrão consultar
+      localStorage.setItem('rock_permissoes_eventos', JSON.stringify(permissoesEventos));
+      db.ref('permissoes_eventos').set(permissoesEventos);
+
+      renderizarListaUsuariosEdicaoEvento();
+      mostrarToast('Usuário adicionado com permissão de consulta!');
+    }
+
+    function alterarPermissaoUsuarioEvento(email, novaPerm) {
+      if (!permissoesEventos[eventoEmEdicaoNomeOriginal]) {
+        permissoesEventos[eventoEmEdicaoNomeOriginal] = {};
+      }
+      permissoesEventos[eventoEmEdicaoNomeOriginal][email] = novaPerm;
+      localStorage.setItem('rock_permissoes_eventos', JSON.stringify(permissoesEventos));
+      db.ref('permissoes_eventos').set(permissoesEventos);
+      mostrarToast(`Permissão alterada com sucesso!`);
+    }
+
+    function salvarEdicaoEvento() {
+      const novoNome = document.getElementById('editNomeEventoInput').value.trim();
+      if (!novoNome) {
+        mostrarToast('O nome do evento não pode ficar em branco!');
+        return;
+      }
+
+      const antigoNome = eventoEmEdicaoNomeOriginal;
+
+      if (novoNome !== antigoNome) {
+        if (eventosCadastrados.includes(novoNome)) {
+          mostrarToast('Já existe outro evento com esse nome!');
+          return;
+        }
+
+        eventosCadastrados[eventoEmEdicaoIndex] = novoNome;
         
         if (indicacoesPorEvento[antigoNome]) {
-          indicacoesPorEvento[nomeFormatado] = indicacoesPorEvento[antigoNome];
+          indicacoesPorEvento[novoNome] = indicacoesPorEvento[antigoNome];
           delete indicacoesPorEvento[antigoNome];
           localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
           db.ref('indicacoes').set(indicacoesPorEvento);
         }
-        
+
+        if (permissoesEventos[antigoNome]) {
+          permissoesEventos[novoNome] = permissoesEventos[antigoNome];
+          delete permissoesEventos[antigoNome];
+          localStorage.setItem('rock_permissoes_eventos', JSON.stringify(permissoesEventos));
+          db.ref('permissoes_eventos').set(permissoesEventos);
+        }
+
         if (eventoAtualSessao === antigoNome) {
-          eventoAtualSessao = nomeFormatado;
-          sessionStorage.setItem('rock_evento_atual', nomeFormatado);
+          eventoAtualSessao = novoNome;
+          sessionStorage.setItem('rock_evento_atual', novoNome);
           atualizarBadgeEvento();
         }
-        
+
         localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
         db.ref('eventos').set(eventosCadastrados);
-        renderizarListaEventosAdmin();
-        renderizarBotoesEscolhaEvento();
-        filtrarData();
-        mostrarToast('Evento alterado!');
       }
+
+      fecharModal('modalEditarEvento');
+      renderizarListaEventosAdmin();
+      renderizarBotoesEscolhaEvento();
+      filtrarData();
+      mostrarToast('Evento atualizado!');
     }
 
     function excluirEvento(index) {
@@ -625,6 +796,12 @@
           delete indicacoesPorEvento[nomeEv];
           localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
           db.ref('indicacoes').set(indicacoesPorEvento);
+        }
+
+        if (permissoesEventos[nomeEv]) {
+          delete permissoesEventos[nomeEv];
+          localStorage.setItem('rock_permissoes_eventos', JSON.stringify(permissoesEventos));
+          db.ref('permissoes_eventos').set(permissoesEventos);
         }
         
         if (eventoAtualSessao === nomeEv) {
