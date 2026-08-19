@@ -15,15 +15,16 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-    body { background-color: #f4f6f9; color: #333; padding: 12px; overflow-x: hidden; }
+    body { background-color: #f4f6f9; color: #333; padding: 12px; overflow-x: hidden; transition: background-color 0.3s, color 0.3s; }
     
-    /* Suporte Completo a Tela Cheia */
+    body.dark-mode { background-color: #121212; color: #e0e0e0; }
+    body.dark-mode .table-container, body.dark-mode .modal-content, body.dark-mode .paginacao { background-color: #1e1e1e; color: #e0e0e0; }
+    body.dark-mode table { color: #e0e0e0; }
+    body.dark-mode tbody tr:hover { background-color: #2c2c2c; }
+    body.dark-mode .filter-select, body.dark-mode .filter-input, body.dark-mode .search-bar input { background-color: #2b2b2b; color: #fff; border-color: #444; }
+
     :fullscreen, :-webkit-full-screen {
-      background-color: #f4f6f9;
-      padding: 12px;
-      width: 100vw;
-      height: 100vh;
-      overflow-y: auto;
+      background-color: #f4f6f9; padding: 12px; width: 100vw; height: 100vh; overflow-y: auto;
     }
 
     header {
@@ -148,7 +149,7 @@
   </div>
 
   <!-- Modal Unificado de Login e Cadastro -->
-  <div id="modalAuth" class="modal-overlay" style="display: flex;">
+  <div id="modalAuth" class="modal-overlay">
     <div class="modal-content">
       <div class="auth-tabs">
         <div id="tabLogin" class="auth-tab active" onclick="alternarAbaAuth('login')">Login</div>
@@ -160,7 +161,7 @@
         <input type="email" id="loginEmailInput" placeholder="Seu E-mail...">
         <input type="password" id="loginSenhaInput" placeholder="Sua Senha..." onkeyup="if(event.key==='Enter') executarLogin()">
         <div class="modal-buttons">
-          <button class="btn btn-green" style="width: 100%; padding: 12px;" onclick="executarLogin()">🚀 Entrar e Expandir</button>
+          <button class="btn btn-green" style="width: 100%; padding: 12px;" onclick="executarLogin()">🚀 Entrar e Acessar</button>
         </div>
       </div>
 
@@ -170,7 +171,7 @@
         <input type="email" id="cadEmailInput" placeholder="Seu E-mail...">
         <input type="password" id="cadSenhaInput" placeholder="Crie uma Senha...">
         <div class="modal-buttons">
-          <button class="btn btn-purple" style="width: 100%; padding: 12px;" onclick="executarCadastro()">🚀 Cadastrar e Expandir</button>
+          <button class="btn btn-purple" style="width: 100%; padding: 12px;" onclick="executarCadastro()">🚀 Cadastrar e Acessar</button>
         </div>
       </div>
     </div>
@@ -238,14 +239,14 @@
     let eventoAtualSessao = sessionStorage.getItem('rock_evento_atual') || '';
 
     let usuariosCadastrados = JSON.parse(localStorage.getItem('rock_users') || '[]');
-    let usuarioLogado = JSON.parse(sessionStorage.getItem('rock_logged_user') || 'null');
+    // UTILIZA LOCALSTORAGE PARA MANTER LOGIN ENTRE ABAS
+    let usuarioLogado = JSON.parse(localStorage.getItem('rock_logged_user') || 'null');
 
     let paginaAtual = 1;
     const itensPorPagina = 30;
 
-    // --- ESCUTA EM TEMPO REAL COM FIREBASE (SINCRONIZAÇÃO NUVEM) ---
+    // --- ESCUTA EM TEMPO REAL COM FIREBASE ---
     function iniciarSincronizacaoNuvem() {
-      // Sincronizar Usuários
       db.ref('usuarios').on('value', snapshot => {
         const val = snapshot.val();
         if (val) {
@@ -254,7 +255,6 @@
         }
       });
 
-      // Sincronizar Eventos
       db.ref('eventos').on('value', snapshot => {
         const val = snapshot.val();
         if (val) {
@@ -265,7 +265,6 @@
         }
       });
 
-      // Sincronizar Indicações
       db.ref('indicacoes').on('value', snapshot => {
         const val = snapshot.val();
         if (val) {
@@ -275,7 +274,6 @@
         }
       });
 
-      // Sincronizar Likes
       db.ref('likes').on('value', snapshot => {
         const val = snapshot.val();
         if (val) {
@@ -296,32 +294,28 @@
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    // --- MANIPULAÇÃO DE TELA CHEIA E EMBED ---
     function estaEmIframe() {
-      try {
-        return window.self !== window.top;
-      } catch (e) {
-        return true;
-      }
+      try { return window.self !== window.top; } catch (e) { return true; }
     }
 
     function forcarEntradaTelaCheia() {
       const docEl = document.documentElement;
-      if (docEl.requestFullscreen) {
-        docEl.requestFullscreen().catch(() => {});
-      } else if (docEl.webkitRequestFullscreen) {
-        docEl.webkitRequestFullscreen().catch(() => {});
-      }
+      if (docEl.requestFullscreen) { docEl.requestFullscreen().catch(() => {}); }
+      else if (docEl.webkitRequestFullscreen) { docEl.webkitRequestFullscreen().catch(() => {}); }
     }
 
-    function dispararTelaCheiaEModo() {
-      forcarEntradaTelaCheia();
+    function abrirModalAuth() {
       if (estaEmIframe()) {
         window.open(window.location.href, '_blank');
+      } else {
+        abrirModal('modalAuth');
       }
     }
 
-    // --- FAVORITOS INDIVIDUAIS ---
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
     function obterChaveFavoritos() {
       if (usuarioLogado && usuarioLogado.email) {
         return 'rock_favs_' + usuarioLogado.email.replace(/[^a-zA-Z0-9]/g, '_');
@@ -334,7 +328,40 @@
       favoritos = JSON.parse(localStorage.getItem(chave) || '[]');
     }
 
-    // --- AUTENTICAÇÃO ---
+    function toggleFavorito(id) {
+      if (!usuarioLogado) { abrirModalAuth(); return; }
+      const chave = obterChaveFavoritos();
+      const idx = favoritos.indexOf(id);
+      if (idx > -1) { favoritos.splice(idx, 1); } else { favoritos.push(id); }
+      localStorage.setItem(chave, JSON.stringify(favoritos));
+      filtrarData();
+    }
+
+    function toggleLike(id) {
+      if (!usuarioLogado) { abrirModalAuth(); return; }
+      likesLocais[id] = !likesLocais[id];
+      localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
+      db.ref('likes').set(likesLocais);
+      filtrarData();
+    }
+
+    function toggleIndicacao(id) {
+      if (!usuarioLogado) { abrirModalAuth(); return; }
+      if (!eventoAtualSessao) {
+        mostrarToast('Selecione um evento primeiro!');
+        abrirModal('modalEscolherEvento');
+        return;
+      }
+      if (!indicacoesPorEvento[eventoAtualSessao]) { indicacoesPorEvento[eventoAtualSessao] = []; }
+      const lista = indicacoesPorEvento[eventoAtualSessao];
+      const idx = lista.indexOf(id);
+      if (idx > -1) { lista.splice(idx, 1); } else { lista.push(id); }
+      
+      localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+      db.ref('indicacoes').set(indicacoesPorEvento);
+      filtrarData();
+    }
+
     function alternarAbaAuth(aba) {
       if (aba === 'login') {
         document.getElementById('tabLogin').classList.add('active');
@@ -354,10 +381,7 @@
       const email = document.getElementById('cadEmailInput').value.trim().toLowerCase();
       const senha = document.getElementById('cadSenhaInput').value;
 
-      if (!nome || !email || !senha) {
-        mostrarToast('Preencha todos os campos!');
-        return;
-      }
+      if (!nome || !email || !senha) { mostrarToast('Preencha todos os campos!'); return; }
 
       if (usuariosCadastrados.some(u => u.email === email)) {
         mostrarToast('E-mail já cadastrado!');
@@ -370,7 +394,6 @@
       localStorage.setItem('rock_users', JSON.stringify(usuariosCadastrados));
       db.ref('usuarios').set(usuariosCadastrados);
 
-      dispararTelaCheiaEModo();
       efetuarLoginSessao(novoUsuario);
       fecharModal('modalAuth');
     }
@@ -379,14 +402,10 @@
       const email = document.getElementById('loginEmailInput').value.trim().toLowerCase();
       const senha = document.getElementById('loginSenhaInput').value;
 
-      if (!email || !senha) {
-        mostrarToast('Digite e-mail e senha!');
-        return;
-      }
+      if (!email || !senha) { mostrarToast('Digite e-mail e senha!'); return; }
 
       const user = usuariosCadastrados.find(u => u.email === email && u.senha === senha);
       if (user) {
-        dispararTelaCheiaEModo();
         efetuarLoginSessao(user);
         fecharModal('modalAuth');
       } else {
@@ -397,7 +416,9 @@
     function efetuarLoginSessao(user) {
       const isAdmin = EMAILS_ADMINISTRADORES.includes(user.email);
       usuarioLogado = { ...user, isAdmin };
-      sessionStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
+      
+      // SALVA NO LOCALSTORAGE PARA MANTER O LOGIN ENTRE ABAS
+      localStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
       
       carregarFavoritosUsuario();
       atualizarInterfaceUsuario();
@@ -414,7 +435,7 @@
       if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
       
       usuarioLogado = null;
-      sessionStorage.removeItem('rock_logged_user');
+      localStorage.removeItem('rock_logged_user');
       sessionStorage.removeItem('rock_evento_atual');
       eventoAtualSessao = '';
       
@@ -430,8 +451,7 @@
 
       if (!usuarioLogado) {
         infoContainer.innerHTML = `👤 Autenticação requerida`;
-        actionsContainer.innerHTML = '';
-        abrirModal('modalAuth');
+        actionsContainer.innerHTML = `<button class="btn btn-green" onclick="abrirModalAuth()">🚀 Entrar / Cadastrar</button>`;
         return;
       }
 
@@ -457,16 +477,6 @@
       `;
       
       atualizarBadgeEvento();
-    }
-
-    // --- EVENTOS ---
-    function inicializarEventos() {
-      if (eventosCadastrados.length > 0 && !eventoAtualSessao && usuarioLogado) {
-        renderizarBotoesEscolhaEvento();
-        abrirModal('modalEscolherEvento');
-      } else if (eventoAtualSessao) {
-        atualizarBadgeEvento();
-      }
     }
 
     function renderizarBotoesEscolhaEvento() {
@@ -614,7 +624,6 @@
       }
     }
 
-    // --- CARREGAMENTO E DADOS ---
     function carregarPlanilha() {
       Papa.parse(PLANILHA_CSV_URL, {
         download: true, header: true, skipEmptyLines: true,
@@ -713,138 +722,86 @@
     function renderizarTabela() {
       const corpo = document.getElementById('corpoTabela');
       corpo.innerHTML = '';
-      const pagContainer = document.getElementById('paginacaoContainer');
 
       if (dadosFiltrados.length === 0) {
-        corpo.innerHTML = '<tr><td colspan="11" style="text-align:center;">Nenhuma música encontrada.</td></tr>';
-        pagContainer.style.display = 'none';
+        corpo.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px;">Nenhuma música encontrada.</td></tr>';
+        document.getElementById('paginacaoContainer').style.display = 'none';
         return;
       }
 
       const inicio = (paginaAtual - 1) * itensPorPagina;
       const fim = inicio + itensPorPagina;
-      const dadosPagina = dadosFiltrados.slice(inicio, fim);
+      const paginaDados = dadosFiltrados.slice(inicio, fim);
 
-      dadosPagina.forEach((item) => {
+      paginaDados.forEach(item => {
+        const tr = document.createElement('tr');
         const isFav = favoritos.includes(item.id);
         const hasLike = !!likesLocais[item.id];
-        const totalLikes = item.likes + (hasLike ? 1 : 0);
         const isIndicado = (indicacoesPorEvento[eventoAtualSessao] || []).includes(item.id);
 
-        const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${item.num}</td>
+          <td><b>${item.num}</b></td>
           <td>${item.estilo}</td>
           <td><b>${item.banda}</b></td>
           <td>${item.musica}</td>
-          <td>${item.tom ? `<span class="tom-badge">${item.tom}</span>` : ''}</td>
-          <td>${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra" onclick="registrarAcesso('${item.id}')">📌 Cifra</a>` : '-'}</td>
-          <td><button class="btn-action" title="Sua Seleção Pessoal" onclick="toggleFavorito('${item.id}')">${isFav ? '❤️' : '🤍'}</button></td>
-          <td><button class="btn-action pill-like ${hasLike ? 'active' : ''}" onclick="toggleLike('${item.id}')">👍 ${totalLikes}</button></td>
-          <td><span class="pill-acesso" id="acesso-${item.id}">${item.acessos}</span></td>
-          <td><button class="btn-action" onclick="toggleIndicacao('${item.id}')">${isIndicado ? '✅' : '➕'}</button></td>
-          <td><button class="btn-action" onclick="toggleErro('${item.id}')">${item.temErro ? '🔴' : '🟣'}</button></td>
+          <td><span class="tom-badge">${item.tom || '-'}</span></td>
+          <td>${item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra">🎸 Cifra</a>` : '-'}</td>
+          <td>
+            <button class="btn-action" onclick="toggleFavorito('${item.id}')">${isFav ? '❤️' : '🤍'}</button>
+          </td>
+          <td>
+            <button class="pill-like ${hasLike ? 'active' : ''}" onclick="toggleLike('${item.id}')">
+              👍 ${hasLike ? 1 : 0}
+            </button>
+          </td>
+          <td><span class="pill-acesso">${item.acessos}</span></td>
+          <td>
+            <button class="btn-action" onclick="toggleIndicacao('${item.id}')">
+              ${isIndicado ? '✅ Indicada' : '📌 Indicar'}
+            </button>
+          </td>
+          <td>${item.temErro ? '🔴 Erro' : '🟢 OK'}</td>
         `;
         corpo.appendChild(tr);
       });
 
-      const maxPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina);
-      document.getElementById('infoPagina').textContent = `Página ${paginaAtual} de ${maxPaginas}`;
-      pagContainer.style.display = maxPaginas > 1 ? 'flex' : 'none';
-    }
-
-    function registrarAcesso(id) {
-      const item = repertorioOriginal.find(m => m.id === id);
-      if (item) {
-        item.acessos += 1;
-        const elAcesso = document.getElementById(`acesso-${id}`);
-        if (elAcesso) elAcesso.textContent = item.acessos;
-      }
-    }
-
-    // --- MANIPULAÇÃO DE AÇÕES DA TABELA ---
-    function toggleFavorito(id) {
-      const chave = obterChaveFavoritos();
-      const idx = favoritos.indexOf(id);
-
-      if (idx > -1) {
-        favoritos.splice(idx, 1);
-      } else {
-        favoritos.push(id);
-      }
-
-      localStorage.setItem(chave, JSON.stringify(favoritos));
-      if (usuarioLogado && usuarioLogado.email) {
-        db.ref('favs/' + usuarioLogado.email.replace(/[^a-zA-Z0-9]/g, '_')).set(favoritos);
-      }
-      filtrarData();
-    }
-
-    function toggleLike(id) {
-      if (likesLocais[id]) delete likesLocais[id]; else likesLocais[id] = true;
-      localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
-      db.ref('likes').set(likesLocais);
-      filtrarData();
-    }
-
-    function toggleIndicacao(id) {
-      if (!eventoAtualSessao) {
-        mostrarToast('Selecione um evento primeiro em 📅 Eventos!');
-        if(usuarioLogado && usuarioLogado.isAdmin) abrirModalEventos();
-        return;
-      }
-      if (!indicacoesPorEvento[eventoAtualSessao]) indicacoesPorEvento[eventoAtualSessao] = [];
-      const lista = indicacoesPorEvento[eventoAtualSessao];
-      const idx = lista.indexOf(id);
-      if (idx > -1) lista.splice(idx, 1); else lista.push(id);
-      
-      localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
-      db.ref('indicacoes').set(indicacoesPorEvento);
-      filtrarData();
-    }
-
-    function toggleErro(id) {
-      const item = repertorioOriginal.find(m => m.id === id);
-      if (item) {
-        item.temErro = !item.temErro;
-        filtrarData(); 
-      }
-    }
-
-    function toggleDarkMode() { 
-      if (document.body.style.filter === 'invert(0.9) hue-rotate(180deg)') {
-        document.body.style.filter = 'none';
-      } else {
-        document.body.style.filter = 'invert(0.9) hue-rotate(180deg)';
-      }
+      const maxPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina) || 1;
+      document.getElementById('infoPagina').textContent = `Página ${paginaAtual} de ${maxPaginas} (${dadosFiltrados.length} músicas)`;
+      document.getElementById('paginacaoContainer').style.display = 'flex';
     }
 
     function exportarPlanilha() {
-      const dadosExportacao = dadosFiltrados.map(item => ({
-        'Nº': item.num,
-        'Estilo': item.estilo,
-        'Banda / Artista': item.banda,
-        'Música': item.musica,
-        'Tom': item.tom,
-        'Likes': item.likes + (likesLocais[item.id] ? 1 : 0),
-        'Acessos': item.acessos,
-        'Indicado': (indicacoesPorEvento[eventoAtualSessao] || []).includes(item.id) ? 'Sim' : 'Não',
-        'Com Erro': item.temErro ? 'Sim' : 'Não'
+      if (dadosFiltrados.length === 0) { mostrarToast('Nenhum dado para exportar!'); return; }
+      const exportData = dadosFiltrados.map(i => ({
+        'Nº': i.num,
+        'Estilo': i.estilo,
+        'Banda': i.banda,
+        'Música': i.musica,
+        'Tom': i.tom,
+        'Cifra': i.cifra,
+        'Favorito': favoritos.includes(i.id) ? 'Sim' : 'Não',
+        'Curtido': likesLocais[i.id] ? 'Sim' : 'Não',
+        'Indicado no Evento': (indicacoesPorEvento[eventoAtualSessao] || []).includes(i.id) ? 'Sim' : 'Não'
       }));
-      const ws = XLSX.utils.json_to_sheet(dadosExportacao);
+
       const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
       XLSX.utils.book_append_sheet(wb, ws, "Repertório");
-      XLSX.writeFile(wb, "repertorio_rockonhasemonha.xlsx");
+      XLSX.writeFile(wb, `Repertorio_Rockonhasemonha_${eventoAtualSessao || 'Geral'}.xlsx`);
     }
 
-    // Inicialização da Página
-    window.onload = function() {
+    // --- INICIALIZAÇÃO DO APLICATIVO ---
+    window.addEventListener('DOMContentLoaded', () => {
       iniciarSincronizacaoNuvem();
-      carregarFavoritosUsuario();
       carregarPlanilha();
+      carregarFavoritosUsuario();
       atualizarInterfaceUsuario();
-      inicializarEventos();
-    };
+      
+      // Se não estiver em iFrame e não tiver usuário logado, abre modal de login
+      if (!estaEmIframe() && !usuarioLogado) {
+        abrirModal('modalAuth');
+      }
+    });
   </script>
 </body>
 </html>
