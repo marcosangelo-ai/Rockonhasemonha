@@ -18,18 +18,15 @@
     body { background-color: #f4f6f9; color: #333; padding: 12px; overflow-x: hidden; transition: background-color 0.3s, color 0.3s; }
     
     body.dark-mode { background-color: #121212; color: #e0e0e0; }
-    body.dark-mode .table-container, body.dark-mode .modal-content, body.dark-mode .paginacao { background-color: #1e1e1e; color: #e0e0e0; border-color: #444; }
+    body.dark-mode .table-container, body.dark-mode .modal-content, body.dark-mode .paginacao { background-color: #1e1e1e; color: #e0e0e0; }
     body.dark-mode table { color: #e0e0e0; }
     body.dark-mode tbody tr:hover { background-color: #2c2c2c; }
     body.dark-mode .filter-select, body.dark-mode .filter-input, body.dark-mode .search-bar input { background-color: #2b2b2b; color: #fff; border-color: #444; }
-    body.dark-mode #listaUsuariosEvento, body.dark-mode #listaUsuariosAdmin { background: #2b2b2b !important; border-color: #444 !important; }
-    body.dark-mode #selectAddUsuarioEvento, body.dark-mode select { background-color: #2b2b2b; color: #fff; border-color: #444; }
+    body.dark-mode #listaUsuariosEvento, body.dark-mode #listaGerenciamentoUsuarios { background: #2b2b2b !important; border-color: #444 !important; }
+    body.dark-mode select, body.dark-mode input { background-color: #2b2b2b; color: #fff; border-color: #444; }
 
     :fullscreen, :-webkit-full-screen {
       background-color: #f4f6f9; padding: 12px; width: 100vw; height: 100vh; overflow-y: auto;
-    }
-    body.dark-mode:fullscreen, body.dark-mode:-webkit-full-screen {
-      background-color: #121212;
     }
 
     header {
@@ -44,35 +41,46 @@
     
     .actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn { padding: 8px 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-dark { background-color: #ffc107; color: #000; }
     .btn-blue { background-color: #0dcaf0; color: #000; }
     .btn-green { background-color: #198754; color: #fff; }
     .btn-red { background-color: #dc3545; color: #fff; }
     .btn-purple { background-color: #6f42c1; color: #fff; }
+    .btn-orange { background-color: #fd7e14; color: #fff; }
 
     .search-bar { width: 100%; margin-bottom: 12px; }
-    .search-bar input { width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #ced4da; border-radius: 6px; background: white; }
+    .search-bar input {
+      width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid #ced4da; border-radius: 6px; background: white;
+    }
 
-    .table-container { width: 100%; max-width: 100vw; overflow-x: auto; -webkit-overflow-scrolling: touch; background: white; border-radius: 6px 6px 0 0; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .table-container { 
+      width: 100%; max-width: 100vw; overflow-x: auto; 
+      -webkit-overflow-scrolling: touch; background: white; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); 
+    }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 1100px; }
     thead { background-color: #212529; color: white; }
     thead tr.titles th { padding: 10px 8px 4px 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
-    
+    thead tr.filters th { padding: 4px 6px 10px 6px; }
+
+    .filter-select, .filter-input { width: 100%; padding: 4px 6px; font-size: 12px; border: 1px solid #495057; border-radius: 4px; background: #fff; color: #212529; }
     tbody td { padding: 8px; border-bottom: 1px solid #dee2e6; vertical-align: middle; white-space: nowrap; }
     tbody tr:hover { background-color: #f8f9fa; }
 
     .tom-badge { background-color: #e9ecef; font-weight: bold; padding: 2px 8px; border-radius: 4px; color: #212529; display: inline-block; font-size: 12px; }
     .btn-cifra { background-color: #dc3545; color: white; text-decoration: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-action { background: transparent; border: none; cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 12px; transition: transform 0.1s; }
+    .btn-action:hover { transform: scale(1.1); }
+    .pill-like { background-color: #e9ecef; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #ced4da; cursor: pointer; }
+    .pill-like.active { background-color: #ffc107; color: #000; border-color: #ffc107; }
+    .pill-acesso { background-color: #0d6efd; color: white; border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: bold; display: inline-block; }
     
     .loading { text-align: center; padding: 25px; font-size: 15px; font-weight: bold; color: #555; }
 
-    /* Estilos da Paginação */
-    .paginacao { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 12px; background: white; border-top: 1px solid #ddd; border-radius: 0 0 6px 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .paginacao { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 15px; background: white; border-top: 1px solid #ddd; }
     .paginacao span { font-weight: bold; font-size: 14px; }
 
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; }
-    .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 420px; color: #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 460px; color: #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     .modal-content h3 { margin-bottom: 15px; font-size: 18px; }
     .modal-content input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
     .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
@@ -81,8 +89,9 @@
     .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-weight: bold; color: #6c757d; }
     .auth-tab.active { color: #0d6efd; border-bottom: 2px solid #0d6efd; margin-bottom: -2px; }
 
-    .lista-eventos-modal { max-height: 200px; overflow-y: auto; margin-bottom: 15px; padding: 0; list-style: none; border: 1px solid #eee; border-radius: 4px; }
-    .lista-eventos-modal li { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+    .lista-eventos-modal { max-height: 220px; overflow-y: auto; margin-bottom: 15px; padding: 0; list-style: none; border: 1px solid #eee; border-radius: 4px; }
+    .lista-eventos-modal li { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+    .lista-eventos-modal li:last-child { border-bottom: none; }
     .btn-sm-action { background: transparent; border: none; cursor: pointer; font-size: 15px; margin-left: 6px; padding: 2px 4px; }
     .btn-sm-action:hover { transform: scale(1.2); }
 
@@ -96,29 +105,50 @@
     <div class="actions" id="headerActionsDisplay"></div>
   </header>
 
-  <!-- CORREÇÃO 1: autocomplete="off" para evitar que o navegador preencha com o e-mail -->
   <div class="search-bar">
-    <input type="text" id="buscaGeral" autocomplete="off" name="ignorar_autofill" placeholder="🔍 Busca Geral (Pesquise qualquer coisa aqui...)" oninput="filtrarData(true)">
+    <input type="text" id="buscaGeral" placeholder="🔍 Busca Geral (Pesquise qualquer coisa aqui...)" oninput="filtrarData()">
   </div>
 
   <div class="table-container">
     <table id="tabelaRepertorio">
       <thead>
         <tr class="titles">
-          <th>Nº</th><th>ESTILO</th><th>BANDA / ARTISTA</th><th>MÚSICA</th><th>TOM</th><th>CIFRA</th><th>❤️ MEU</th><th>👍 LIKES</th><th>ACESSOS</th><th>📌 INDICAÇÃO</th><th>⚠️ ERRO</th>
+          <th>Nº</th>
+          <th>ESTILO</th>
+          <th>BANDA / ARTISTA</th>
+          <th>MÚSICA</th>
+          <th>TOM</th>
+          <th>CIFRA</th>
+          <th>❤️ MEU</th>
+          <th>👍 LIKES</th>
+          <th>ACESSOS</th>
+          <th>📌 INDICAÇÃO</th>
+          <th>⚠️ ERRO</th>
+        </tr>
+        <tr class="filters">
+          <th><input type="text" id="filtroNum" class="filter-input" placeholder="Nº..." oninput="filtrarData()"></th>
+          <th><select id="filtroEstilo" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroBanda" class="filter-select" onchange="filtrarData()"><option value="">Todas</option></select></th>
+          <th><input type="text" id="filtroMusica" class="filter-input" placeholder="Música..." oninput="filtrarData()"></th>
+          <th><select id="filtroTom" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroCifra" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroMeu" class="filter-select" onchange="filtrarData()"><option value="">Todas</option><option value="fav">Favoritas (❤️)</option></select></th>
+          <th><select id="filtroLikes" class="filter-select" onchange="filtrarData()"><option value="">Todos</option><option value="liked">Curtidas (👍)</option></select></th>
+          <th><select id="filtroAcessos" class="filter-select" onchange="filtrarData()"><option value="">Todos</option></select></th>
+          <th><select id="filtroIndicacao" class="filter-select" onchange="filtrarData()"><option value="">Todas</option><option value="indicado">Indicadas (✅)</option></select></th>
+          <th><select id="filtroErro" class="filter-select" onchange="filtrarData()"><option value="">Todos</option><option value="erro">Com Erro (🔴)</option></select></th>
         </tr>
       </thead>
       <tbody id="corpoTabela">
         <tr><td colspan="11" class="loading">Carregando repertório da Planilha Google...</td></tr>
       </tbody>
     </table>
-  </div>
-  
-  <!-- Controles de Paginação -->
-  <div id="controlesPaginacao" class="paginacao" style="display: none;">
-    <button class="btn btn-dark" id="btnPagAnterior" onclick="mudarPagina(-1)">Anterior</button>
-    <span id="infoPaginacao">Página 1 de 1</span>
-    <button class="btn btn-dark" id="btnPagProxima" onclick="mudarPagina(1)">Próxima</button>
+
+    <div class="paginacao" id="paginacaoContainer" style="display:none;">
+      <button class="btn btn-blue" onclick="mudarPagina(-1)">◀ Anterior</button>
+      <span id="infoPagina">Página 1</span>
+      <button class="btn btn-blue" onclick="mudarPagina(1)">Próxima ▶</button>
+    </div>
   </div>
 
   <!-- Modal Unificado de Login e Cadastro -->
@@ -128,16 +158,24 @@
         <div id="tabLogin" class="auth-tab active" onclick="alternarAbaAuth('login')">Login</div>
         <div id="tabCadastro" class="auth-tab" onclick="alternarAbaAuth('cadastro')">Novo Cadastro</div>
       </div>
+
+      <!-- Formulário de Login -->
       <div id="formLogin">
         <input type="email" id="loginEmailInput" placeholder="Seu E-mail...">
         <input type="password" id="loginSenhaInput" placeholder="Sua Senha..." onkeyup="if(event.key==='Enter') executarLogin()">
-        <div class="modal-buttons"><button class="btn btn-green" style="width: 100%; padding: 12px;" onclick="executarLogin()">🚀 Entrar</button></div>
+        <div class="modal-buttons">
+          <button class="btn btn-green" style="width: 100%; padding: 12px;" onclick="executarLogin()">🚀 Entrar e Acessar</button>
+        </div>
       </div>
+
+      <!-- Formulário de Cadastro -->
       <div id="formCadastro" style="display:none;">
         <input type="text" id="cadNomeInput" placeholder="Seu Nome...">
         <input type="email" id="cadEmailInput" placeholder="Seu E-mail...">
         <input type="password" id="cadSenhaInput" placeholder="Crie uma Senha...">
-        <div class="modal-buttons"><button class="btn btn-purple" style="width: 100%; padding: 12px;" onclick="executarCadastro()">🚀 Cadastrar</button></div>
+        <div class="modal-buttons">
+          <button class="btn btn-purple" style="width: 100%; padding: 12px;" onclick="executarCadastro()">🚀 Cadastrar e Acessar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -145,48 +183,68 @@
   <!-- Modal de Seleção de Evento -->
   <div id="modalEscolherEvento" class="modal-overlay">
     <div class="modal-content">
-      <h3>Selecione um Evento</h3>
+      <h3>Selecione um Evento para Hoje</h3>
+      <p style="margin-bottom:12px; font-size:13px; color:#555;">Escolha para qual evento você deseja trabalhar:</p>
       <div id="listaEventosBotoes" style="display:flex; flex-direction:column; gap:8px;"></div>
-      <div class="modal-buttons"><button class="btn btn-red" onclick="fecharModal('modalEscolherEvento')">Ignorar</button></div>
+      <div class="modal-buttons">
+        <button class="btn btn-red" onclick="fecharModal('modalEscolherEvento')">Ignorar</button>
+      </div>
     </div>
   </div>
 
-  <!-- Modal Gerenciar Eventos -->
+  <!-- Modal de Gerenciar Eventos (Todos os usuários logados) -->
   <div id="modalGerenciarEvento" class="modal-overlay">
     <div class="modal-content">
-      <h3>📅 Eventos</h3>
-      <p style="font-size:13px; margin-bottom:8px; font-weight:bold;">Novo Evento:</p>
+      <h3>📅 Gerenciar Eventos</h3>
+      <p style="font-size:13px; margin-bottom:8px; font-weight:bold;">Criar Novo Evento:</p>
       <div style="display:flex; gap:6px; margin-bottom:15px;">
         <input type="text" id="novoEventoInput" placeholder="Nome do evento..." style="margin-bottom:0;">
-        <button class="btn btn-green" onclick="salvarNovoEvento()">Criar</button>
+        <button class="btn btn-green" onclick="salvarNovoEvento()">Cadastrar</button>
       </div>
-      <p style="font-size:13px; margin-bottom:8px; font-weight:bold;">Lista de Eventos:</p>
-      <ul id="listaEventosAdmin" class="lista-eventos-modal"></ul>
-      <div class="modal-buttons"><button class="btn btn-red" onclick="fecharModal('modalGerenciarEvento')">Fechar</button></div>
+
+      <p style="font-size:13px; margin-bottom:8px; font-weight:bold;">Eventos Cadastrados:</p>
+      <ul id="listaEventosModal" class="lista-eventos-modal"></ul>
+
+      <div class="modal-buttons">
+        <button class="btn btn-red" onclick="fecharModal('modalGerenciarEvento')">Fechar</button>
+      </div>
     </div>
   </div>
 
-  <!-- Modal de Edição de Evento e Permissões -->
+  <!-- Modal de Edição de Evento e Permissões de Usuários (Criador ou Admin) -->
   <div id="modalEditarEvento" class="modal-overlay">
     <div class="modal-content" style="max-width: 480px;">
-      <h3>⚙️ Editar Evento</h3>
-      <label style="font-size:13px; font-weight:bold;">Nome do Evento:</label>
-      <input type="text" id="editNomeEventoInput">
-      <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">👥 Participantes e Permissões:</label>
-      <div id="listaUsuariosEvento" style="max-height: 180px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 10px;"></div>
+      <h3>⚙️ Editar Evento e Permissões</h3>
+      
+      <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">Nome do Evento:</label>
+      <input type="text" id="editNomeEventoInput" placeholder="Nome do evento...">
+
+      <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">👥 Participantes e Permissões do Evento:</label>
+      <p style="font-size:11px; color:#666; margin-bottom:8px;">Defina quem pode indicar músicas ou apenas consultar:</p>
+
+      <div id="listaUsuariosEvento" style="max-height: 180px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 10px; background: #fafafa;"></div>
+
+      <div style="margin-bottom: 15px;">
+        <select id="selectAddUsuarioEvento" style="width:100%; padding:8px; font-size:12px; border:1px solid #ccc; border-radius:4px;" onchange="adicionarUsuarioAoEventoManual()">
+          <option value="">+ Adicionar participante ao evento...</option>
+        </select>
+      </div>
+
       <div class="modal-buttons">
-        <button class="btn btn-green" onclick="salvarEdicaoEvento()">💾 Salvar</button>
+        <button class="btn btn-green" onclick="salvarEdicaoEvento()">💾 Salvar Alterações</button>
         <button class="btn btn-red" onclick="fecharModal('modalEditarEvento')">Cancelar</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal: Gerenciar Usuários (Exclusivo Admin) -->
+  <!-- Modal de Gerenciamento de Perfis/Administradores (Exclusivo para Admins) -->
   <div id="modalGerenciarUsuarios" class="modal-overlay">
-    <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-content" style="max-width: 480px;">
       <h3>👑 Gerenciar Perfis de Usuários</h3>
-      <p style="font-size:12px; color:#666; margin-bottom:10px;">Promova usuários a Administrador ou rebaixe-os a Membros.</p>
-      <div id="listaUsuariosAdmin" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 10px;"></div>
+      <p style="font-size:12px; color:#666; margin-bottom:12px;">Promova membros a Administradores ou altere suas permissões do sistema:</p>
+
+      <div id="listaGerenciamentoUsuarios" style="max-height: 250px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 15px; background: #fafafa;"></div>
+
       <div class="modal-buttons">
         <button class="btn btn-red" onclick="fecharModal('modalGerenciarUsuarios')">Fechar</button>
       </div>
@@ -207,147 +265,330 @@
       appId: "1:502573184690:web:ad8b7ac9ad170897953bab",
       measurementId: "G-PBR2BS6SGY"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const PLANILHA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSX5NkwC4sig9rOBanE7OUNyWgoUFl7A2ICK8_sXxLtrx6ZxG-eGAiQebdC0Ss2eBcQxBmupP9zTKXM/pub?gid=1523365951&single=true&output=csv';
     const EMAILS_ADMINISTRADORES = ['marcos.angelo@ifal.edu.br', 'marcos.angelo83@gmail.com'];
 
-    // Variáveis Globais
     let repertorioOriginal = [];
     let dadosFiltrados = [];
-    let paginaAtual = 1;
-    const ITENS_POR_PAGINA = 50;
-
+    let favoritos = []; 
+    let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
+    let errosLocais = JSON.parse(localStorage.getItem('rock_erros') || '{}');
+    
     let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
     let indicacoesPorEvento = JSON.parse(localStorage.getItem('rock_indicacoes') || '{}');
     let permissoesEventos = JSON.parse(localStorage.getItem('rock_permissoes_eventos') || '{}');
-    let criadoresEventos = JSON.parse(localStorage.getItem('rock_criadores_eventos') || '{}');
-    
     let eventoAtualSessao = sessionStorage.getItem('rock_evento_atual') || '';
+
     let usuariosCadastrados = JSON.parse(localStorage.getItem('rock_users') || '[]');
     let usuarioLogado = JSON.parse(localStorage.getItem('rock_logged_user') || 'null');
 
     let eventoEmEdicaoIndex = null;
     let eventoEmEdicaoNomeOriginal = '';
 
-    // --- ESCUTA FIREBASE ---
+    let paginaAtual = 1;
+    const itensPorPagina = 30;
+
+    // Helper: Normaliza o objeto do evento (Suporte retrocompatível para strings antigas)
+    function normalizarEvento(ev) {
+      if (typeof ev === 'string') {
+        return { nome: ev, criador: '' };
+      }
+      return ev || { nome: '', criador: '' };
+    }
+
+    // Helper: Verifica se usuário é admin (por e-mail fixo ou por flag no cadastro)
+    function verificarSeEhAdmin(user) {
+      if (!user) return false;
+      if (EMAILS_ADMINISTRADORES.includes(user.email)) return true;
+      return !!user.isAdmin;
+    }
+
+    // Helper: Checa se o usuário atual pode GERENCIAR/EDITAR/EXCLUIR um evento
+    function podeGerenciarEvento(ev) {
+      if (!usuarioLogado) return false;
+      if (usuarioLogado.isAdmin) return true; // Admins podem tudo
+      const objEv = normalizarEvento(ev);
+      return objEv.criador && objEv.criador.toLowerCase() === usuarioLogado.email.toLowerCase();
+    }
+
+    // --- ESCUTA EM TEMPO REAL COM FIREBASE ---
     function iniciarSincronizacaoNuvem() {
       db.ref('usuarios').on('value', snapshot => {
         const val = snapshot.val();
         if (val) {
           usuariosCadastrados = Array.isArray(val) ? val : Object.values(val);
           localStorage.setItem('rock_users', JSON.stringify(usuariosCadastrados));
-          atualizarInterfaceUsuario();
+          
+          // Se o usuário logado teve o perfil de admin alterado em tempo real:
+          if (usuarioLogado) {
+            const atualizado = usuariosCadastrados.find(u => u.email === usuarioLogado.email);
+            if (atualizado) {
+              const novoIsAdmin = verificarSeEhAdmin(atualizado);
+              if (usuarioLogado.isAdmin !== novoIsAdmin) {
+                usuarioLogado.isAdmin = novoIsAdmin;
+                localStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
+                atualizarInterfaceUsuario();
+              }
+            }
+          }
+          renderizarListaGerenciamentoUsuarios();
         }
       });
+
       db.ref('eventos').on('value', snapshot => {
         const val = snapshot.val();
         if (val) {
-          eventosCadastrados = Array.isArray(val) ? val : Object.values(val);
+          const rawList = Array.isArray(val) ? val : Object.values(val);
+          eventosCadastrados = rawList.map(normalizarEvento);
           localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
-          renderizarListaEventosAdmin();
+          renderizarListaEventosModal();
+          renderizarBotoesEscolhaEvento();
         }
       });
-      db.ref('criadores_eventos').on('value', snapshot => {
-        const val = snapshot.val();
-        if (val) criadoresEventos = val;
-      });
+
       db.ref('indicacoes').on('value', snapshot => {
         const val = snapshot.val();
-        if (val) indicacoesPorEvento = val;
+        if (val) {
+          indicacoesPorEvento = val;
+          localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+          filtrarData();
+        }
       });
+
       db.ref('permissoes_eventos').on('value', snapshot => {
         const val = snapshot.val();
-        if (val) permissoesEventos = val;
+        if (val) {
+          permissoesEventos = val;
+          localStorage.setItem('rock_permissoes_eventos', JSON.stringify(permissoesEventos));
+        }
+      });
+
+      db.ref('likes').on('value', snapshot => {
+        const val = snapshot.val();
+        if (val) {
+          likesLocais = val;
+          localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
+          filtrarData();
+        }
+      });
+
+      db.ref('erros').on('value', snapshot => {
+        const val = snapshot.val();
+        if (val) {
+          errosLocais = val;
+          localStorage.setItem('rock_erros', JSON.stringify(errosLocais));
+          filtrarData();
+        }
       });
     }
-    iniciarSincronizacaoNuvem();
 
-    // --- FUNÇÕES UTILITÁRIAS ---
     function mostrarToast(msg) {
       const t = document.getElementById('toast');
-      t.textContent = msg; t.style.display = 'block';
+      t.textContent = msg;
+      t.style.display = 'block';
       setTimeout(() => t.style.display = 'none', 3000);
     }
+
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
-    function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
-    function alternarAbaAuth(aba) {
-      document.getElementById('formLogin').style.display = aba === 'login' ? 'block' : 'none';
-      document.getElementById('formCadastro').style.display = aba === 'cadastro' ? 'block' : 'none';
-      document.getElementById('tabLogin').classList.toggle('active', aba === 'login');
-      document.getElementById('tabCadastro').classList.toggle('active', aba === 'cadastro');
-    }
-    function abrirModalAuth() { abrirModal('modalAuth'); }
 
-    // CORREÇÃO 2: Abre o sistema em uma nova aba maximizada
-    function abrirNovaAbaMaximizada() {
-      const url = window.location.href;
-      const parametros = `width=${screen.availWidth},height=${screen.availHeight},top=0,left=0,fullscreen=yes,scrollbars=yes,resizable=yes`;
-      
-      const novaAba = window.open(url, '_blank', parametros);
-      if (!novaAba) {
-        mostrarToast('O navegador bloqueou a nova aba (Pop-up). Permita os pop-ups!');
+    function estaEmIframe() {
+      try { return window.self !== window.top; } catch (e) { return true; }
+    }
+
+    function forcarEntradaTelaCheia() {
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) { docEl.requestFullscreen().catch(() => {}); }
+      else if (docEl.webkitRequestFullscreen) { docEl.webkitRequestFullscreen().catch(() => {}); }
+    }
+
+    function abrirModalAuth() {
+      if (estaEmIframe()) {
+        window.open(window.location.href, '_blank');
+      } else {
+        abrirModal('modalAuth');
       }
     }
 
-    // --- AUTENTICAÇÃO ---
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    function obterChaveFavoritos() {
+      if (usuarioLogado && usuarioLogado.email) {
+        return 'rock_favs_' + usuarioLogado.email.replace(/[^a-zA-Z0-9]/g, '_');
+      }
+      return 'rock_favs_guest';
+    }
+
+    function carregarFavoritosUsuario() {
+      const chave = obterChaveFavoritos();
+      favoritos = JSON.parse(localStorage.getItem(chave) || '[]');
+    }
+
+    function toggleFavorito(id) {
+      if (!usuarioLogado) { abrirModalAuth(); return; }
+      const chave = obterChaveFavoritos();
+      const idx = favoritos.indexOf(id);
+      if (idx > -1) { favoritos.splice(idx, 1); } else { favoritos.push(id); }
+      localStorage.setItem(chave, JSON.stringify(favoritos));
+      filtrarData();
+    }
+
+    function toggleLike(id) {
+      if (!usuarioLogado) { abrirModalAuth(); return; }
+      likesLocais[id] = !likesLocais[id];
+      localStorage.setItem('rock_likes', JSON.stringify(likesLocais));
+      db.ref('likes').set(likesLocais);
+      filtrarData();
+    }
+
+    function toggleErro(id) {
+      if (!usuarioLogado) { abrirModalAuth(); return; }
+      errosLocais[id] = !errosLocais[id];
+      localStorage.setItem('rock_erros', JSON.stringify(errosLocais));
+      db.ref('erros').set(errosLocais);
+      filtrarData();
+      mostrarToast(errosLocais[id] ? 'Música marcada com erro 🔴' : 'Música marcada como OK 🟢');
+    }
+
+    // --- VERIFICAÇÃO E CADASTRO DE PERMISSÃO POR EVENTO ---
+    function garantirRegistroUsuarioNoEvento(evNome) {
+      if (!evNome || !usuarioLogado || !usuarioLogado.email) return;
+      if (!permissoesEventos[evNome]) {
+        permissoesEventos[evNome] = {};
+      }
+      
+      const objEv = eventosCadastrados.map(normalizarEvento).find(e => e.nome === evNome);
+      const eCriador = objEv && objEv.criador && objEv.criador.toLowerCase() === usuarioLogado.email.toLowerCase();
+
+      if (!permissoesEventos[evNome][usuarioLogado.email]) {
+        // Se for admin ou criador do evento, ganha permissão de indicar por padrão, senão consultar
+        permissoesEventos[evNome][usuarioLogado.email] = (usuarioLogado.isAdmin || eCriador) ? 'indicar' : 'consultar';
+        localStorage.setItem('rock_permissoes_eventos', JSON.stringify(permissoesEventos));
+        db.ref('permissoes_eventos').set(permissoesEventos);
+      }
+    }
+
+    function toggleIndicacao(id) {
+      if (!usuarioLogado) { abrirModalAuth(); return; }
+      if (!eventoAtualSessao) {
+        mostrarToast('Selecione um evento primeiro!');
+        abrirModal('modalEscolherEvento');
+        return;
+      }
+
+      garantirRegistroUsuarioNoEvento(eventoAtualSessao);
+
+      const objEv = eventosCadastrados.map(normalizarEvento).find(e => e.nome === eventoAtualSessao);
+      const eCriador = objEv && objEv.criador && objEv.criador.toLowerCase() === usuarioLogado.email.toLowerCase();
+
+      const perm = (permissoesEventos[eventoAtualSessao] && permissoesEventos[eventoAtualSessao][usuarioLogado.email]) 
+                   || ((usuarioLogado.isAdmin || eCriador) ? 'indicar' : 'consultar');
+
+      if (perm !== 'indicar' && !usuarioLogado.isAdmin && !eCriador) {
+        mostrarToast('🔒 Você tem permissão apenas para CONSULTAR as músicas deste evento.');
+        return;
+      }
+
+      if (!indicacoesPorEvento[eventoAtualSessao]) { indicacoesPorEvento[eventoAtualSessao] = []; }
+      const lista = indicacoesPorEvento[eventoAtualSessao];
+      const idx = lista.indexOf(id);
+      if (idx > -1) { lista.splice(idx, 1); } else { lista.push(id); }
+      
+      localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+      db.ref('indicacoes').set(indicacoesPorEvento);
+      filtrarData();
+    }
+
+    function alternarAbaAuth(aba) {
+      if (aba === 'login') {
+        document.getElementById('tabLogin').classList.add('active');
+        document.getElementById('tabCadastro').classList.remove('active');
+        document.getElementById('formLogin').style.display = 'block';
+        document.getElementById('formCadastro').style.display = 'none';
+      } else {
+        document.getElementById('tabCadastro').classList.add('active');
+        document.getElementById('tabLogin').classList.remove('active');
+        document.getElementById('formCadastro').style.display = 'block';
+        document.getElementById('formLogin').style.display = 'none';
+      }
+    }
+
     function executarCadastro() {
       const nome = document.getElementById('cadNomeInput').value.trim();
       const email = document.getElementById('cadEmailInput').value.trim().toLowerCase();
       const senha = document.getElementById('cadSenhaInput').value;
 
-      if (!nome || !email || !senha) return mostrarToast('Preencha todos os campos!');
-      if (usuariosCadastrados.some(u => u.email === email)) return mostrarToast('E-mail já cadastrado!');
+      if (!nome || !email || !senha) { mostrarToast('Preencha todos os campos!'); return; }
 
-      const novoUsuario = { nome, email, senha, isAdmin: EMAILS_ADMINISTRADORES.includes(email) };
+      if (usuariosCadastrados.some(u => u.email === email)) {
+        mostrarToast('E-mail já cadastrado!');
+        alternarAbaAuth('login');
+        return;
+      }
+
+      const novoUsuario = { nome, email, senha, isAdmin: false };
       usuariosCadastrados.push(novoUsuario);
-      
+      localStorage.setItem('rock_users', JSON.stringify(usuariosCadastrados));
       db.ref('usuarios').set(usuariosCadastrados);
 
       efetuarLoginSessao(novoUsuario);
       fecharModal('modalAuth');
-      abrirNovaAbaMaximizada(); // Chama a função para nova janela
     }
 
     function executarLogin() {
       const email = document.getElementById('loginEmailInput').value.trim().toLowerCase();
       const senha = document.getElementById('loginSenhaInput').value;
-      if (!email || !senha) return mostrarToast('Digite e-mail e senha!');
+
+      if (!email || !senha) { mostrarToast('Digite e-mail e senha!'); return; }
 
       const user = usuariosCadastrados.find(u => u.email === email && u.senha === senha);
       if (user) {
         efetuarLoginSessao(user);
         fecharModal('modalAuth');
-        abrirNovaAbaMaximizada(); // Chama a função para nova janela
       } else {
         mostrarToast('E-mail ou senha incorretos!');
       }
     }
 
     function efetuarLoginSessao(user) {
-      const isRealAdmin = EMAILS_ADMINISTRADORES.includes(user.email) || user.isAdmin === true;
-      usuarioLogado = { ...user, isAdmin: isRealAdmin };
+      const isAdmin = verificarSeEhAdmin(user);
+      usuarioLogado = { ...user, isAdmin };
       
       localStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
+      
+      carregarFavoritosUsuario();
       atualizarInterfaceUsuario();
       
+      if (eventoAtualSessao) {
+        garantirRegistroUsuarioNoEvento(eventoAtualSessao);
+      }
+
       if (eventosCadastrados.length > 0 && !eventoAtualSessao) {
         renderizarBotoesEscolhaEvento();
         abrirModal('modalEscolherEvento');
       }
-      filtrarData(true);
+      
+      filtrarData();
     }
 
     function efetuarLogout() {
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      
       usuarioLogado = null;
       localStorage.removeItem('rock_logged_user');
       sessionStorage.removeItem('rock_evento_atual');
       eventoAtualSessao = '';
       
+      carregarFavoritosUsuario();
       atualizarInterfaceUsuario();
-      filtrarData(true);
+      filtrarData();
+      mostrarToast('Você saiu.');
     }
 
     function atualizarInterfaceUsuario() {
@@ -360,323 +601,578 @@
         return;
       }
 
-      const isRealAdmin = EMAILS_ADMINISTRADORES.includes(usuarioLogado.email) || usuarioLogado.isAdmin === true;
-      usuarioLogado.isAdmin = isRealAdmin;
-
-      const badge = isRealAdmin 
+      const badge = usuarioLogado.isAdmin 
         ? '<span class="badge-admin">ADMINISTRADOR</span>' 
         : '<span class="badge-membro">MEMBRO</span>';
 
-      infoContainer.innerHTML = `👤 ${usuarioLogado.nome} (${usuarioLogado.email}) ${badge} <span id="badgeEventoAtivo" class="evento-ativo-badge"></span>`;
+      infoContainer.innerHTML = `
+        👤 ${usuarioLogado.nome} (${usuarioLogado.email}) ${badge}
+        <span id="badgeEventoAtivo" class="evento-ativo-badge">📍 Evento: Nenhum</span>
+      `;
 
-      let botoesAdminUsers = isRealAdmin ? `<button class="btn btn-dark" onclick="abrirModalUsuarios()">👑 Usuários</button>` : '';
+      let botaoGerenciarUsuarios = usuarioLogado.isAdmin 
+        ? `<button class="btn btn-orange" onclick="abrirModalGerenciarUsuarios()">👑 Usuários (Admin)</button>` 
+        : '';
 
       actionsContainer.innerHTML = `
-        ${botoesAdminUsers}
         <button class="btn btn-purple" onclick="abrirModalEventos()">📅 Eventos</button>
+        ${botaoGerenciarUsuarios}
+        <button class="btn btn-green" onclick="forcarEntradaTelaCheia()">⛶ Tela Cheia</button>
         <button class="btn btn-dark" onclick="toggleDarkMode()">🌙 Escuro</button>
+        <button class="btn btn-blue" onclick="exportarPlanilha()">📊 Exportar Excel</button>
         <button class="btn btn-red" onclick="efetuarLogout()">🚪 Sair</button>
       `;
+      
       atualizarBadgeEvento();
     }
 
-    // --- CARREGAMENTO DO REPERTÓRIO (COM PAGINAÇÃO) ---
-    function carregarPlanilha() {
-      Papa.parse(PLANILHA_CSV_URL, {
-        download: true,
-        header: true,
-        complete: function(results) {
-          repertorioOriginal = results.data.filter(row => row['MÚSICA']);
-          
-          // Se o navegador preencheu sujeira na busca, limpa e força o filtro
-          const inputBusca = document.getElementById('buscaGeral');
-          if(inputBusca.value === usuarioLogado?.email) {
-            inputBusca.value = '';
-          }
-          
-          filtrarData(true);
-        },
-        error: function(err) {
-          document.getElementById('corpoTabela').innerHTML = `<tr><td colspan="11" class="loading" style="color:red;">Erro ao carregar planilha: ${err.message}</td></tr>`;
-        }
-      });
-    }
-
-    function filtrarData(resetarPagina = false) {
-      if (resetarPagina) paginaAtual = 1;
-
-      const termoBusca = document.getElementById('buscaGeral').value.toLowerCase();
-      
-      dadosFiltrados = repertorioOriginal.filter(row => {
-        const valores = Object.values(row).join(' ').toLowerCase();
-        return valores.includes(termoBusca);
-      });
-
-      renderizarTabela();
-    }
-
-    function renderizarTabela() {
-      const tbody = document.getElementById('corpoTabela');
-      tbody.innerHTML = '';
-
-      if (dadosFiltrados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="loading">Nenhuma música encontrada.</td></tr>';
-        document.getElementById('controlesPaginacao').style.display = 'none';
-        return;
-      }
-
-      // Fatiando os dados para a página atual (De 50 em 50)
-      const inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
-      const fim = inicio + ITENS_POR_PAGINA;
-      const itensPagina = dadosFiltrados.slice(inicio, fim);
-
-      itensPagina.forEach((row, i) => {
-        const indexGeral = inicio + i + 1;
-        const tr = document.createElement('tr');
-
-        tr.innerHTML = `
-          <td>${indexGeral}</td>
-          <td>${row['ESTILO'] || ''}</td>
-          <td>${row['BANDA / ARTISTA'] || ''}</td>
-          <td><b>${row['MÚSICA'] || ''}</b></td>
-          <td><span class="tom-badge">${row['TOM'] || ''}</span></td>
-          <td>
-            ${row['CIFRA'] ? `<a href="${row['CIFRA']}" target="_blank" class="btn-cifra">🎵 Cifra</a>` : '-'}
-          </td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-          <td>-</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      atualizarControlesPaginacao();
-    }
-
-    function atualizarControlesPaginacao() {
-      const totalPaginas = Math.ceil(dadosFiltrados.length / ITENS_POR_PAGINA);
-      const divPaginacao = document.getElementById('controlesPaginacao');
-      
-      if (totalPaginas <= 1) {
-        divPaginacao.style.display = 'none';
-        return;
-      }
-
-      divPaginacao.style.display = 'flex';
-      document.getElementById('infoPaginacao').innerText = `Página ${paginaAtual} de ${totalPaginas}`;
-      
-      document.getElementById('btnPagAnterior').disabled = (paginaAtual === 1);
-      document.getElementById('btnPagProxima').disabled = (paginaAtual === totalPaginas);
-    }
-
-    function mudarPagina(direcao) {
-      paginaAtual += direcao;
-      renderizarTabela();
-      document.querySelector('.table-container').scrollTo({top: 0, behavior: 'smooth'});
-      window.scrollTo({top: 0, behavior: 'smooth'});
-    }
-
-    // --- MANUTENÇÃO DE MÓDULOS DE EVENTO ---
-    function atualizarBadgeEvento() {
-      const badge = document.getElementById('badgeEventoAtivo');
-      if (badge && eventoAtualSessao) {
-        badge.style.display = 'inline-block';
-        badge.textContent = `📍 Evento: ${eventoAtualSessao}`;
-      } else if (badge) {
-        badge.style.display = 'none';
-      }
-    }
-    
-    function renderizarListaEventosAdmin() {
-      const ul = document.getElementById('listaEventosAdmin');
-      if(!ul) return;
-      ul.innerHTML = '';
-      if(eventosCadastrados.length === 0) {
-        ul.innerHTML = '<li style="font-size:13px; color:#666; justify-content:center;">Nenhum evento.</li>';
-        return;
-      }
-      
-      eventosCadastrados.forEach((ev, idx) => {
-        let li = document.createElement('li');
-        const isAtivo = ev === eventoAtualSessao;
-        const criador = criadoresEventos[ev];
-        const podeGerenciar = usuarioLogado && (usuarioLogado.isAdmin || criador === usuarioLogado.email);
-
-        let divBotoes = `<button class="btn-sm-action" onclick="selecionarEventoAtivo('${ev}')" title="Ativar Evento para Mim">📌</button>`;
-        
-        if (podeGerenciar) {
-          divBotoes += `
-            <button class="btn-sm-action" onclick="abrirEditarEvento(${idx})" title="Editar Permissões e Nome">✏️</button>
-            <button class="btn-sm-action" onclick="excluirEvento(${idx})" title="Excluir">🗑️</button>
-          `;
-        }
-        li.innerHTML = `<span><b>${ev}</b> ${isAtivo ? '⭐ (Ativo)' : ''}</span> <div>${divBotoes}</div>`;
-        ul.appendChild(li);
-      });
-    }
-
-    function selecionarEventoAtivo(ev) {
-      eventoAtualSessao = ev;
-      sessionStorage.setItem('rock_evento_atual', ev);
-      atualizarBadgeEvento();
-      filtrarData(true);
-      mostrarToast('Evento ativado: ' + ev);
-    }
-    
     function renderizarBotoesEscolhaEvento() {
       const divBotoes = document.getElementById('listaEventosBotoes');
-      if(!divBotoes) return;
       divBotoes.innerHTML = '';
-      eventosCadastrados.forEach(ev => {
+      if(eventosCadastrados.length === 0) {
+        divBotoes.innerHTML = '<p style="font-size:13px; color:#666;">Nenhum evento cadastrado.</p>';
+        return;
+      }
+      eventosCadastrados.forEach(itemRaw => {
+        const ev = normalizarEvento(itemRaw);
         const btn = document.createElement('button');
         btn.className = 'btn btn-purple';
-        btn.textContent = ev;
-        btn.onclick = () => {
-          selecionarEventoAtivo(ev);
-          fecharModal('modalEscolherEvento');
-        };
+        btn.textContent = ev.nome;
+        btn.onclick = () => selecionarEventoAtivo(ev.nome);
         divBotoes.appendChild(btn);
       });
     }
 
-    // --- FUNÇÕES DOS EVENTOS ---
+    function selecionarEventoAtivo(evNome) {
+      eventoAtualSessao = evNome;
+      sessionStorage.setItem('rock_evento_atual', evNome);
+      
+      garantirRegistroUsuarioNoEvento(evNome);
+
+      atualizarBadgeEvento();
+      fecharModal('modalEscolherEvento');
+      filtrarData();
+      mostrarToast('Evento selecionado: ' + evNome);
+    }
+
+    function atualizarBadgeEvento() {
+      const badge = document.getElementById('badgeEventoAtivo');
+      if (badge) {
+        if (eventoAtualSessao) {
+          badge.style.display = 'inline-block';
+          badge.textContent = `📍 Evento: ${eventoAtualSessao}`;
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    }
+
     function abrirModalEventos() {
-      renderizarListaEventosAdmin();
+      renderizarListaEventosModal();
       document.getElementById('novoEventoInput').value = '';
       abrirModal('modalGerenciarEvento');
     }
 
-    function salvarNovoEvento() {
-      const novo = document.getElementById('novoEventoInput').value.trim();
-      if (!novo) return;
-      if (eventosCadastrados.includes(novo)) return mostrarToast('Evento já existe!');
+    function renderizarListaEventosModal() {
+      const ul = document.getElementById('listaEventosModal');
+      ul.innerHTML = '';
+      if(eventosCadastrados.length === 0) {
+        ul.innerHTML = '<li style="font-size:13px; color:#666; justify-content:center;">Nenhum evento cadastrado.</li>';
+      } else {
+        eventosCadastrados.forEach((itemRaw, idx) => {
+          const ev = normalizarEvento(itemRaw);
+          let li = document.createElement('li');
+          const isAtivo = ev.nome === eventoAtualSessao;
+          const temPermissaoEditar = podeGerenciarEvento(ev);
 
-      eventosCadastrados.push(novo);
-      localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
-      db.ref('eventos').set(eventosCadastrados);
+          let botoesAcao = `
+            <button class="btn-sm-action" onclick="selecionarEventoAtivo('${ev.nome}')" title="Ativar Este Evento">📌 Ativar</button>
+          `;
 
-      criadoresEventos[novo] = usuarioLogado.email;
-      localStorage.setItem('rock_criadores_eventos', JSON.stringify(criadoresEventos));
-      db.ref('criadores_eventos').set(criadoresEventos);
+          if (temPermissaoEditar) {
+            botoesAcao += `
+              <button class="btn-sm-action" onclick="abrirEditarEvento(${idx})" title="Editar Permissões do Evento">✏️</button>
+              <button class="btn-sm-action" onclick="excluirEvento(${idx})" title="Excluir Evento">🗑️</button>
+            `;
+          }
 
-      selecionarEventoAtivo(novo);
-      document.getElementById('novoEventoInput').value = '';
-      renderizarListaEventosAdmin();
-      renderizarBotoesEscolhaEvento();
+          const infoCriador = ev.criador ? `<br><small style="color:#777; font-size:10px;">Criador: ${ev.criador}</small>` : '';
+
+          li.innerHTML = `
+            <div>
+              <b>${ev.nome}</b> ${isAtivo ? '⭐ (Ativo)' : ''}
+              ${infoCriador}
+            </div>
+            <div>
+              ${botoesAcao}
+            </div>
+          `;
+          ul.appendChild(li);
+        });
+      }
     }
 
-    function abrirEditarEvento(index) {
-      eventoEmEdicaoIndex = index;
-      eventoEmEdicaoNomeOriginal = eventosCadastrados[index];
+    function salvarNovoEvento() {
+      if (!usuarioLogado) { abrirModalAuth(); return; }
+
+      const input = document.getElementById('novoEventoInput');
+      const novoNome = input.value.trim();
       
-      document.getElementById('editNomeEventoInput').value = eventoEmEdicaoNomeOriginal;
+      if(novoNome) {
+        const nomesExistentes = eventosCadastrados.map(e => normalizarEvento(e).nome.toLowerCase());
+        if(nomesExistentes.includes(novoNome.toLowerCase())) {
+          mostrarToast('Já existe um evento com esse nome!');
+          return;
+        }
+
+        const novoEventoObj = {
+          nome: novoNome,
+          criador: usuarioLogado.email
+        };
+
+        eventosCadastrados.push(novoEventoObj);
+        localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        db.ref('eventos').set(eventosCadastrados);
+        
+        eventoAtualSessao = novoNome;
+        sessionStorage.setItem('rock_evento_atual', novoNome);
+        
+        garantirRegistroUsuarioNoEvento(novoNome);
+
+        input.value = '';
+        atualizarBadgeEvento();
+        renderizarListaEventosModal();
+        renderizarBotoesEscolhaEvento();
+        filtrarData();
+        mostrarToast('Evento cadastrado com sucesso!');
+      }
+    }
+
+    // --- GERENCIAMENTO DE EDIÇÃO E PERMISSÕES DO EVENTO ---
+    function abrirEditarEvento(index) {
+      const ev = normalizarEvento(eventosCadastrados[index]);
+      if (!podeGerenciarEvento(ev)) {
+        mostrarToast('🔒 Apenas o criador do evento ou um Admin podem alterar as permissões.');
+        return;
+      }
+
+      eventoEmEdicaoIndex = index;
+      eventoEmEdicaoNomeOriginal = ev.nome;
+      
+      document.getElementById('editNomeEventoInput').value = ev.nome;
+      renderizarListaUsuariosEdicaoEvento();
       abrirModal('modalEditarEvento');
+    }
+
+    function renderizarListaUsuariosEdicaoEvento() {
+      const container = document.getElementById('listaUsuariosEvento');
+      container.innerHTML = '';
+
+      const evPerms = permissoesEventos[eventoEmEdicaoNomeOriginal] || {};
+      const emailsInclusos = Object.keys(evPerms);
+
+      if (emailsInclusos.length === 0) {
+        container.innerHTML = '<p style="font-size:12px; color:#777; text-align:center; padding:8px;">Nenhum participante neste evento ainda.</p>';
+      } else {
+        emailsInclusos.forEach(email => {
+          const uCad = usuariosCadastrados.find(u => u.email === email);
+          const nomeExibicao = uCad ? `${uCad.nome} (${email})` : email;
+          const permAtual = evPerms[email] || 'consultar';
+
+          const div = document.createElement('div');
+          div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #eee; font-size:12px;';
+          div.innerHTML = `
+            <span style="font-weight:500; word-break:break-all; padding-right:8px;">${nomeExibicao}</span>
+            <select onchange="alterarPermissaoUsuarioEvento('${email}', this.value)" style="padding:4px; font-size:11px; border-radius:4px; border:1px solid #ccc;">
+              <option value="consultar" ${permAtual === 'consultar' ? 'selected' : ''}>👁️ Apenas Consultar</option>
+              <option value="indicar" ${permAtual === 'indicar' ? 'selected' : ''}>✏️ Pode Indicar</option>
+            </select>
+          `;
+          container.appendChild(div);
+        });
+      }
+
+      // Preenche select com usuários que ainda não estão no evento
+      const selectAdd = document.getElementById('selectAddUsuarioEvento');
+      if (selectAdd) {
+        selectAdd.innerHTML = '<option value="">+ Adicionar participante ao evento...</option>';
+        usuariosCadastrados.forEach(u => {
+          if (!emailsInclusos.includes(u.email)) {
+            const opt = document.createElement('option');
+            opt.value = u.email;
+            opt.textContent = `${u.nome} (${u.email})`;
+            selectAdd.appendChild(opt);
+          }
+        });
+      }
+    }
+
+    function adicionarUsuarioAoEventoManual() {
+      const selectAdd = document.getElementById('selectAddUsuarioEvento');
+      const email = selectAdd.value;
+      if (!email) return;
+
+      if (!permissoesEventos[eventoEmEdicaoNomeOriginal]) {
+        permissoesEventos[eventoEmEdicaoNomeOriginal] = {};
+      }
+      permissoesEventos[eventoEmEdicaoNomeOriginal][email] = 'consultar';
+      localStorage.setItem('rock_permissoes_eventos', JSON.stringify(permissoesEventos));
+      db.ref('permissoes_eventos').set(permissoesEventos);
+
+      renderizarListaUsuariosEdicaoEvento();
+      mostrarToast('Participante adicionado com permissão de consulta!');
+    }
+
+    function alterarPermissaoUsuarioEvento(email, novaPerm) {
+      if (!permissoesEventos[eventoEmEdicaoNomeOriginal]) {
+        permissoesEventos[eventoEmEdicaoNomeOriginal] = {};
+      }
+      permissoesEventos[eventoEmEdicaoNomeOriginal][email] = novaPerm;
+      localStorage.setItem('rock_permissoes_eventos', JSON.stringify(permissoesEventos));
+      db.ref('permissoes_eventos').set(permissoesEventos);
+      mostrarToast(`Permissão alterada com sucesso!`);
     }
 
     function salvarEdicaoEvento() {
       const novoNome = document.getElementById('editNomeEventoInput').value.trim();
-      if (!novoNome || novoNome === eventoEmEdicaoNomeOriginal) {
-        fecharModal('modalEditarEvento');
+      if (!novoNome) {
+        mostrarToast('O nome do evento não pode ficar em branco!');
         return;
       }
 
-      if (eventosCadastrados.includes(novoNome)) {
-        return mostrarToast("Já existe um evento com este nome!");
-      }
-      
-      eventosCadastrados[eventoEmEdicaoIndex] = novoNome;
-      
-      if(permissoesEventos[eventoEmEdicaoNomeOriginal]) {
-        permissoesEventos[novoNome] = permissoesEventos[eventoEmEdicaoNomeOriginal];
-        delete permissoesEventos[eventoEmEdicaoNomeOriginal];
-      }
-      if(indicacoesPorEvento[eventoEmEdicaoNomeOriginal]) {
-        indicacoesPorEvento[novoNome] = indicacoesPorEvento[eventoEmEdicaoNomeOriginal];
-        delete indicacoesPorEvento[eventoEmEdicaoNomeOriginal];
-      }
-      if(criadoresEventos[eventoEmEdicaoNomeOriginal]) {
-        criadoresEventos[novoNome] = criadoresEventos[eventoEmEdicaoNomeOriginal];
-        delete criadoresEventos[eventoEmEdicaoNomeOriginal];
-      }
-      if (eventoAtualSessao === eventoEmEdicaoNomeOriginal) {
-        selecionarEventoAtivo(novoNome);
+      const antigoObj = normalizarEvento(eventosCadastrados[eventoEmEdicaoIndex]);
+      const antigoNome = antigoObj.nome;
+
+      if (novoNome !== antigoNome) {
+        const nomesExistentes = eventosCadastrados.map((e, i) => i !== eventoEmEdicaoIndex ? normalizarEvento(e).nome.toLowerCase() : null);
+        if (nomesExistentes.includes(novoNome.toLowerCase())) {
+          mostrarToast('Já existe outro evento com esse nome!');
+          return;
+        }
+
+        eventosCadastrados[eventoEmEdicaoIndex] = {
+          nome: novoNome,
+          criador: antigoObj.criador
+        };
+        
+        if (indicacoesPorEvento[antigoNome]) {
+          indicacoesPorEvento[novoNome] = indicacoesPorEvento[antigoNome];
+          delete indicacoesPorEvento[antigoNome];
+          localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+          db.ref('indicacoes').set(indicacoesPorEvento);
+        }
+
+        if (permissoesEventos[antigoNome]) {
+          permissoesEventos[novoNome] = permissoesEventos[antigoNome];
+          delete permissoesEventos[antigoNome];
+          localStorage.setItem('rock_permissoes_eventos', JSON.stringify(permissoesEventos));
+          db.ref('permissoes_eventos').set(permissoesEventos);
+        }
+
+        if (eventoAtualSessao === antigoNome) {
+          eventoAtualSessao = novoNome;
+          sessionStorage.setItem('rock_evento_atual', novoNome);
+          atualizarBadgeEvento();
+        }
+
+        localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
+        db.ref('eventos').set(eventosCadastrados);
       }
 
-      db.ref('eventos').set(eventosCadastrados);
-      db.ref('permissoes_eventos').set(permissoesEventos);
-      db.ref('indicacoes').set(indicacoesPorEvento);
-      db.ref('criadores_eventos').set(criadoresEventos);
-      
       fecharModal('modalEditarEvento');
-      renderizarListaEventosAdmin();
+      renderizarListaEventosModal();
+      renderizarBotoesEscolhaEvento();
+      filtrarData();
       mostrarToast('Evento atualizado!');
     }
 
     function excluirEvento(index) {
-      if(confirm('Tem certeza que deseja EXCLUIR este evento e suas indicações?')) {
-        const nomeRemover = eventosCadastrados[index];
-        eventosCadastrados.splice(index, 1);
-        delete permissoesEventos[nomeRemover];
-        delete indicacoesPorEvento[nomeRemover];
-        delete criadoresEventos[nomeRemover];
+      const ev = normalizarEvento(eventosCadastrados[index]);
+      if (!podeGerenciarEvento(ev)) {
+        mostrarToast('🔒 Apenas o criador do evento ou um Admin podem excluí-lo.');
+        return;
+      }
 
-        if (eventoAtualSessao === nomeRemover) {
+      if (confirm(`Deseja excluir o evento "${ev.nome}"?`)) {
+        const nomeEv = ev.nome;
+        eventosCadastrados.splice(index, 1);
+        
+        if (indicacoesPorEvento[nomeEv]) {
+          delete indicacoesPorEvento[nomeEv];
+          localStorage.setItem('rock_indicacoes', JSON.stringify(indicacoesPorEvento));
+          db.ref('indicacoes').set(indicacoesPorEvento);
+        }
+
+        if (permissoesEventos[nomeEv]) {
+          delete permissoesEventos[nomeEv];
+          localStorage.setItem('rock_permissoes_eventos', JSON.stringify(permissoesEventos));
+          db.ref('permissoes_eventos').set(permissoesEventos);
+        }
+        
+        if (eventoAtualSessao === nomeEv) {
           eventoAtualSessao = '';
           sessionStorage.removeItem('rock_evento_atual');
           atualizarBadgeEvento();
         }
-
+        
+        localStorage.setItem('rock_eventos', JSON.stringify(eventosCadastrados));
         db.ref('eventos').set(eventosCadastrados);
-        db.ref('permissoes_eventos').set(permissoesEventos);
-        db.ref('indicacoes').set(indicacoesPorEvento);
-        db.ref('criadores_eventos').set(criadoresEventos);
-
-        renderizarListaEventosAdmin();
+        renderizarListaEventosModal();
         renderizarBotoesEscolhaEvento();
+        filtrarData();
         mostrarToast('Evento excluído!');
       }
     }
 
-    function abrirModalUsuarios() {
-      if (!usuarioLogado || !usuarioLogado.isAdmin) return;
-      const container = document.getElementById('listaUsuariosAdmin');
-      container.innerHTML = '';
-      
-      usuariosCadastrados.forEach((u) => {
-        const isMaster = EMAILS_ADMINISTRADORES.includes(u.email);
-        const isCurrentlyAdmin = isMaster || u.isAdmin === true;
-
-        const div = document.createElement('div');
-        div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #eee; font-size:13px;';
-        
-        let acaoHTML = isMaster 
-          ? `<span style="font-size:11px; color:#999; font-style:italic;">Admin Mestre</span>`
-          : `<button class="btn ${isCurrentlyAdmin ? 'btn-red' : 'btn-green'}" style="padding:4px 8px; font-size:11px;" onclick="toggleAdminUsuario('${u.email}')">
-              ${isCurrentlyAdmin ? 'Remover Admin' : 'Tornar Admin'}
-             </button>`;
-
-        div.innerHTML = `<span><b>${u.nome}</b> (${u.email})</span><div>${acaoHTML}</div>`;
-        container.appendChild(div);
-      });
+    // --- GERENCIAMENTO DE USUÁRIOS E PERFIS DE ADMINISTRAÇÃO ---
+    function abrirModalGerenciarUsuarios() {
+      if (!usuarioLogado || !usuarioLogado.isAdmin) {
+        mostrarToast('🔒 Recurso exclusivo para Administradores.');
+        return;
+      }
+      renderizarListaGerenciamentoUsuarios();
       abrirModal('modalGerenciarUsuarios');
     }
 
-    function toggleAdminUsuario(email) {
-      const userIndex = usuariosCadastrados.findIndex(u => u.email === email);
-      if(userIndex > -1) {
-        usuariosCadastrados[userIndex].isAdmin = !usuariosCadastrados[userIndex].isAdmin;
+    function renderizarListaGerenciamentoUsuarios() {
+      const container = document.getElementById('listaGerenciamentoUsuarios');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (usuariosCadastrados.length === 0) {
+        container.innerHTML = '<p style="font-size:12px; color:#777; text-align:center;">Nenhum usuário cadastrado.</p>';
+        return;
+      }
+
+      usuariosCadastrados.forEach(u => {
+        const ehAdminPadrao = EMAILS_ADMINISTRADORES.includes(u.email);
+        const ehAdmin = ehAdminPadrao || !!u.isAdmin;
+
+        const div = document.createElement('div');
+        div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee; font-size:12px;';
+        
+        let selectHtml = `
+          <select onchange="alterarPerfilUsuario('${u.email}', this.value)" style="padding:4px; font-size:11px; border-radius:4px; border:1px solid #ccc;">
+            <option value="membro" ${!ehAdmin ? 'selected' : ''}>👤 Membro</option>
+            <option value="admin" ${ehAdmin ? 'selected' : ''}>👑 Administrador</option>
+          </select>
+        `;
+
+        if (ehAdminPadrao) {
+          selectHtml = `<span style="font-size:11px; font-weight:bold; color:#dc3545;">👑 Admin Principal</span>`;
+        }
+
+        div.innerHTML = `
+          <div>
+            <b>${u.nome}</b><br>
+            <small style="color:#666;">${u.email}</small>
+          </div>
+          <div>${selectHtml}</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function alterarPerfilUsuario(email, novoPerfil) {
+      if (!usuarioLogado || !usuarioLogado.isAdmin) {
+        mostrarToast('Apenas administradores podem fazer essa alteração!');
+        return;
+      }
+
+      const u = usuariosCadastrados.find(item => item.email === email);
+      if (u) {
+        u.isAdmin = (novoPerfil === 'admin');
+        localStorage.setItem('rock_users', JSON.stringify(usuariosCadastrados));
         db.ref('usuarios').set(usuariosCadastrados);
-        abrirModalUsuarios();
-        mostrarToast(`Permissões atualizadas para ${email}!`);
+
+        mostrarToast(`Perfil de ${u.nome} atualizado para ${novoPerfil === 'admin' ? 'Administrador' : 'Membro'}!`);
       }
     }
 
-    // Inicialização
-    atualizarInterfaceUsuario();
-    carregarPlanilha();
+    function carregarPlanilha() {
+      Papa.parse(PLANILHA_CSV_URL, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: function(results) {
+          repertorioOriginal = results.data.map((item, index) => {
+            const erroValor = item['Erro'] || item['ERRO'] || '';
+            const temErroCSV = erroValor.includes('⚠️') || erroValor.includes('🔴') || erroValor.toLowerCase().includes('sim') || erroValor === '1';
 
+            return {
+              id: String(item['Seq.'] || item['Seq'] || (index + 1)),
+              num: item['Seq.'] || item['Seq'] || (index + 1),
+              estilo: item['Stilo'] || item['Estilo'] || '',
+              banda: item['Banda'] || item['Artista'] || '',
+              musica: item['Música'] || item['Musica'] || '',
+              tom: item['Tom'] || '',
+              cifra: item['Links das Cifras'] || item['Cifra'] || '#',
+              likes: parseInt(item['Likes'] || '0', 10),
+              acessos: parseInt(item['Acessos'] || '0', 10),
+              temErro: temErroCSV
+            };
+          }).filter(m => m.musica);
+
+          carregarFavoritosUsuario();
+          preencherFiltros(repertorioOriginal);
+          filtrarData();
+        },
+        error: function() {
+          document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="11" style="color:red; text-align:center;">Erro ao carregar planilha.</td></tr>';
+        }
+      });
+    }
+
+    function preencherFiltros(dados) {
+      const estilos = [...new Set(dados.map(d => d.estilo))].filter(Boolean).sort();
+      const bandas = [...new Set(dados.map(d => d.banda))].filter(Boolean).sort();
+      const tons = [...new Set(dados.map(d => d.tom))].filter(Boolean).sort();
+      preencherSelect('filtroEstilo', estilos);
+      preencherSelect('filtroBanda', bandas);
+      preencherSelect('filtroTom', tons);
+    }
+
+    function preencherSelect(id, lista) {
+      const select = document.getElementById(id);
+      select.innerHTML = select.children[0].outerHTML;
+      lista.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item; opt.textContent = item;
+        select.appendChild(opt);
+      });
+    }
+
+    function filtrarData() {
+      const busca = document.getElementById('buscaGeral').value.toLowerCase();
+      const num = document.getElementById('filtroNum').value.toLowerCase();
+      const estilo = document.getElementById('filtroEstilo').value;
+      const banda = document.getElementById('filtroBanda').value;
+      const musica = document.getElementById('filtroMusica').value.toLowerCase();
+      const tom = document.getElementById('filtroTom').value;
+      const meu = document.getElementById('filtroMeu').value;
+      const likesFilter = document.getElementById('filtroLikes').value;
+      const indicacaoFilter = document.getElementById('filtroIndicacao').value;
+      const erroFilter = document.getElementById('filtroErro').value;
+
+      dadosFiltrados = repertorioOriginal.filter(item => {
+        const isFav = favoritos.includes(item.id);
+        const hasLike = !!likesLocais[item.id];
+        const isIndicado = (indicacoesPorEvento[eventoAtualSessao] || []).includes(item.id);
+        const possuiErro = item.temErro || !!errosLocais[item.id];
+
+        const atendeGeral = !busca || String(item.num).toLowerCase().includes(busca) || item.estilo.toLowerCase().includes(busca) || item.banda.toLowerCase().includes(busca) || item.musica.toLowerCase().includes(busca) || item.tom.toLowerCase().includes(busca);
+        const atendeNum = !num || String(item.num).toLowerCase().includes(num);
+        const atendeEstilo = !estilo || item.estilo === estilo;
+        const atendeBanda = !banda || item.banda === banda;
+        const atendeMusica = !musica || item.musica.toLowerCase().includes(musica);
+        const atendeTom = !tom || item.tom === tom;
+        const atendeMeu = !meu || (meu === 'fav' && isFav);
+        const atendeLikes = !likesFilter || (likesFilter === 'liked' && hasLike);
+        const atendeIndicacao = !indicacaoFilter || (indicacaoFilter === 'indicado' && isIndicado);
+        const atendeErro = !erroFilter || (erroFilter === 'erro' && possuiErro);
+
+        return atendeGeral && atendeNum && atendeEstilo && atendeBanda && atendeMusica && atendeTom && atendeMeu && atendeLikes && atendeIndicacao && atendeErro;
+      });
+
+      paginaAtual = 1;
+      renderizarTabela();
+    }
+
+    function mudarPagina(delta) {
+      const maxPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina) || 1;
+      paginaAtual += delta;
+      if (paginaAtual < 1) paginaAtual = 1;
+      if (paginaAtual > maxPaginas) paginaAtual = maxPaginas;
+      renderizarTabela();
+      window.scrollTo(0, 0);
+    }
+
+    function renderizarTabela() {
+      const corpo = document.getElementById('corpoTabela');
+      corpo.innerHTML = '';
+
+      if (dadosFiltrados.length === 0) {
+        corpo.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px;">Nenhuma música encontrada.</td></tr>';
+        document.getElementById('paginacaoContainer').style.display = 'none';
+        return;
+      }
+
+      const inicio = (paginaAtual - 1) * itensPorPagina;
+      const fim = inicio + itensPorPagina;
+      const paginaDados = dadosFiltrados.slice(inicio, fim);
+
+      paginaDados.forEach(item => {
+        const tr = document.createElement('tr');
+        const isFav = favoritos.includes(item.id);
+        const hasLike = !!likesLocais[item.id];
+        const isIndicado = (indicacoesPorEvento[eventoAtualSessao] || []).includes(item.id);
+        const possuiErro = item.temErro || !!errosLocais[item.id];
+
+        tr.innerHTML = `
+          <td><b>${item.num}</b></td>
+          <td>${item.estilo}</td>
+          <td><b>${item.banda}</b></td>
+          <td>${item.musica}</td>
+          <td><span class="tom-badge">${item.tom || '-'}</span></td>
+          <td>${item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra">🎸 Cifra</a>` : '-'}</td>
+          <td>
+            <button class="btn-action" onclick="toggleFavorito('${item.id}')">${isFav ? '❤️' : '🤍'}</button>
+          </td>
+          <td>
+            <button class="pill-like ${hasLike ? 'active' : ''}" onclick="toggleLike('${item.id}')">
+              👍 ${hasLike ? 1 : 0}
+            </button>
+          </td>
+          <td><span class="pill-acesso">${item.acessos}</span></td>
+          <td>
+            <button class="btn-action" onclick="toggleIndicacao('${item.id}')">
+              ${isIndicado ? '✅ Indicada' : '📌 Indicar'}
+            </button>
+          </td>
+          <td>
+            <button class="btn-action" onclick="toggleErro('${item.id}')" title="Clique para sinalizar erro nesta música">
+              ${possuiErro ? '🔴 Erro' : '🟢 OK'}
+            </button>
+          </td>
+        `;
+        corpo.appendChild(tr);
+      });
+
+      const maxPaginas = Math.ceil(dadosFiltrados.length / itensPorPagina) || 1;
+      document.getElementById('infoPagina').textContent = `Página ${paginaAtual} de ${maxPaginas} (${dadosFiltrados.length} músicas)`;
+      document.getElementById('paginacaoContainer').style.display = 'flex';
+    }
+
+    function exportarPlanilha() {
+      if (dadosFiltrados.length === 0) { mostrarToast('Nenhum dado para exportar!'); return; }
+      const exportData = dadosFiltrados.map(i => ({
+        'Nº': i.num,
+        'Estilo': i.estilo,
+        'Banda': i.banda,
+        'Música': i.musica,
+        'Tom': i.tom,
+        'Cifra': i.cifra,
+        'Favorito': favoritos.includes(i.id) ? 'Sim' : 'Não',
+        'Curtido': likesLocais[i.id] ? 'Sim' : 'Não',
+        'Indicado no Evento': (indicacoesPorEvento[eventoAtualSessao] || []).includes(i.id) ? 'Sim' : 'Não',
+        'Com Erro': (i.temErro || !!errosLocais[i.id]) ? 'Sim' : 'Não'
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      XLSX.utils.book_append_sheet(wb, ws, "Repertório");
+      XLSX.writeFile(wb, `Repertorio_Rockonhasemonha_${eventoAtualSessao || 'Geral'}.xlsx`);
+    }
+
+    // --- INICIALIZAÇÃO DO APLICATIVO ---
+    window.addEventListener('DOMContentLoaded', () => {
+      iniciarSincronizacaoNuvem();
+      carregarPlanilha();
+      carregarFavoritosUsuario();
+      atualizarInterfaceUsuario();
+      
+      if (!estaEmIframe() && !usuarioLogado) {
+        abrirModal('modalAuth');
+      }
+    });
   </script>
 </body>
 </html>
