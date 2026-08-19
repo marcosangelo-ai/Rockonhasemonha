@@ -145,7 +145,7 @@
     </div>
   </div>
 
-  <!-- Modal Unificado de Login e Cadastro (Obrigatório) -->
+  <!-- Modal Unificado de Login e Cadastro -->
   <div id="modalAuth" class="modal-overlay" style="display: flex;">
     <div class="modal-content">
       <div class="auth-tabs">
@@ -213,7 +213,7 @@
 
     let repertorioOriginal = [];
     let dadosFiltrados = [];
-    let favoritos = []; // Carregado individualmente por usuário
+    let favoritos = []; // Seleção Pessoal (Isolada)
     let likesLocais = JSON.parse(localStorage.getItem('rock_likes') || '{}');
     
     let eventosCadastrados = JSON.parse(localStorage.getItem('rock_eventos') || '[]');
@@ -237,14 +237,17 @@
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    // --- CARREGAMENTO INDIVIDUAL DE FAVORITOS (POR USUÁRIO) ---
-    function carregarFavoritosUsuario() {
+    // --- CHAVE DE FAVORITOS EXCLUSIVA E INDIVIDUAL ---
+    function obterChaveFavoritos() {
       if (usuarioLogado && usuarioLogado.email) {
-        const chaveUserFavs = 'rock_favs_' + usuarioLogado.email;
-        favoritos = JSON.parse(localStorage.getItem(chaveUserFavs) || '[]');
-      } else {
-        favoritos = [];
+        return 'rock_favs_' + usuarioLogado.email;
       }
+      return 'rock_favs_guest'; // Visitantes possuem armazenamento próprio local
+    }
+
+    function carregarFavoritosUsuario() {
+      const chave = obterChaveFavoritos();
+      favoritos = JSON.parse(localStorage.getItem(chave) || '[]');
     }
 
     // --- TELA CHEIA NATIVA ---
@@ -331,7 +334,7 @@
       usuarioLogado = { ...user, isAdmin };
       sessionStorage.setItem('rock_logged_user', JSON.stringify(usuarioLogado));
       
-      // Carrega exclusivamente os favoritos deste usuário
+      // Carrega exclusivamente a lista de favoritos desta conta
       carregarFavoritosUsuario();
       
       atualizarInterfaceUsuario();
@@ -350,8 +353,8 @@
       sessionStorage.removeItem('rock_evento_atual');
       eventoAtualSessao = '';
       
-      // Limpa os favoritos da tela ao deslogar
-      favoritos = [];
+      // Atualiza para a lista de favoritos do visitante/deslogado
+      carregarFavoritosUsuario();
       
       atualizarInterfaceUsuario();
       filtrarData();
@@ -566,6 +569,7 @@
             };
           }).filter(m => m.musica);
 
+          carregarFavoritosUsuario(); // Sincroniza a seleção pessoal
           preencherFiltros(repertorioOriginal);
           filtrarData();
         },
@@ -667,7 +671,7 @@
           <td>${item.musica}</td>
           <td>${item.tom ? `<span class="tom-badge">${item.tom}</span>` : ''}</td>
           <td>${item.cifra && item.cifra !== '#' ? `<a href="${item.cifra}" target="_blank" class="btn-cifra" onclick="registrarAcesso('${item.id}')">📌 Cifra</a>` : '-'}</td>
-          <td><button class="btn-action" onclick="toggleFavorito('${item.id}')">${isFav ? '❤️' : '🤍'}</button></td>
+          <td><button class="btn-action" title="Sua Seleção Pessoal" onclick="toggleFavorito('${item.id}')">${isFav ? '❤️' : '🤍'}</button></td>
           <td><button class="btn-action pill-like ${hasLike ? 'active' : ''}" onclick="toggleLike('${item.id}')">👍 ${totalLikes}</button></td>
           <td><span class="pill-acesso" id="acesso-${item.id}">${item.acessos}</span></td>
           <td><button class="btn-action" onclick="toggleIndicacao('${item.id}')">${isIndicado ? '✅' : '➕'}</button></td>
@@ -690,24 +694,19 @@
       }
     }
 
-    // --- FAVORITAR MÚSICA (MEU ❤️ - INDIVIDUAL POR USUÁRIO) ---
+    // --- MANIPULAÇÃO DA COLUNA "❤️ MEU" (MÚSICAS FAVORITAS DO INDIVÍDUO) ---
     function toggleFavorito(id) {
-      if (!usuarioLogado) {
-        mostrarToast('Faça login para favoritar músicas!');
-        return;
-      }
-
+      const chave = obterChaveFavoritos();
       const idx = favoritos.indexOf(id);
+
       if (idx > -1) {
         favoritos.splice(idx, 1);
       } else {
         favoritos.push(id);
       }
 
-      // Salva no localStorage com a chave individual do e-mail
-      const chaveUserFavs = 'rock_favs_' + usuarioLogado.email;
-      localStorage.setItem(chaveUserFavs, JSON.stringify(favoritos));
-      
+      // Salva única e exclusivamente na chave da conta atual
+      localStorage.setItem(chave, JSON.stringify(favoritos));
       filtrarData();
     }
 
@@ -768,8 +767,8 @@
 
     // Inicialização da Página
     window.onload = function() {
+      carregarFavoritosUsuario();
       carregarPlanilha();
-      carregarFavoritosUsuario(); // Carrega favoritas se usuário já estiver autenticado na sessão
       atualizarInterfaceUsuario();
       inicializarEventos();
     };
